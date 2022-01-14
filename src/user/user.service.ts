@@ -1,12 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserType } from './schemas/user-schema';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { IUser } from './dto/user.inetrface';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+
 import { ChangeUserRoleDto } from './dto/change-user-role.dto';
 import { ChangeUserStatusDto } from './dto/change-user-status.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { IUser } from './dto/user.inetrface';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { User, UserType } from './schemas/user-schema';
 
 @Injectable()
 export class UserService {
@@ -27,6 +28,7 @@ export class UserService {
   }
 
   async createUser(userDto: CreateUserDto): Promise<IUser> {
+    console.log(userDto);
     const newUser = new this.userModel(userDto);
     return await newUser.save();
   }
@@ -81,5 +83,18 @@ export class UserService {
       throw new NotFoundException('user not found');
     }
     return deletedUser;
+  }
+
+  async updateUserByParam(
+    userID: string,
+    param: Partial<IUser>,
+  ): Promise<IUser> {
+    return await this.userModel
+      .findByIdAndUpdate(userID, param, { new: true })
+      .exec();
+  }
+
+  async findUserByParam(param: Partial<IUser>): Promise<IUser> {
+    return await this.userModel.findOne(param).exec();
   }
 }
