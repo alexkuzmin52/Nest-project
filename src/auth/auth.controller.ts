@@ -13,7 +13,7 @@ export class AuthController {
     private userService: UserService,
   ) {}
 
-  @ApiOperation({ summary: 'Create user' })
+  @ApiOperation({ summary: 'Create and register user' })
   @ApiResponse({ status: 201, type: String })
   @Post('register')
   register(@Body() createUserDto: CreateUserDto): Promise<string> {
@@ -21,7 +21,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'User registration confirmation' })
-  @ApiResponse({ status: 201, type: String })
+  @ApiResponse({ status: 200, type: String })
   @Get('confirm/:confirmToken')
   confirm(@Param('confirmToken') confirmToken: string): Promise<object> {
     return this.authService.confirmUser(confirmToken);

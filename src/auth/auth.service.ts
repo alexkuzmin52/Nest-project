@@ -29,11 +29,13 @@ export class AuthService {
     const userAlreadyExist = await this.userService.findUserByParam({
       email: createUserDto.email,
     });
+
     if (userAlreadyExist) {
       throw new BadRequestException(
         `User with this e-mail ${createUserDto.email} is already registered`,
       );
     }
+
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const newUser = await this.userService.createUser({
       ...createUserDto,
@@ -54,7 +56,10 @@ export class AuthService {
         email: user.email,
         role: user.role,
       },
-      { secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET') },
+      {
+        secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
+        expiresIn: this.configService.get('JWT_CONFIRM_EMAIL_LIFETIME'),
+      },
     );
   }
 
@@ -63,21 +68,22 @@ export class AuthService {
       const payload = await this.jwtService.verify(confirmToken, {
         secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
       });
-      console.log('payload', payload);
       const userByConfirmToken = await this.userService.findUserByParam({
         token: confirmToken,
       });
-      console.log(userByConfirmToken);
+
       if (
         !userByConfirmToken ||
         userByConfirmToken.status !== UserStatusEnum.PENDING
       ) {
         throw new UnauthorizedException('Invalid credentials');
       }
+
       await this.userService.updateUserByParam(payload['id'], {
         status: UserStatusEnum.CONFIRMED,
         token: null,
       });
+
       return { message: 'Registration successfully confirmed. Please login' };
     } catch (e) {
       throw new UnauthorizedException('Invalid credentials');
@@ -88,6 +94,7 @@ export class AuthService {
     const userLogin = await this.userService.findUserByParam({
       email: loginDto.email,
     });
+
     if (!userLogin) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -125,5 +132,9 @@ export class AuthService {
     await newAuthModel.save();
 
     return { access_token, refresh_token };
+  }
+
+  async findAuthByUserId(userID: string): Promise<boolean> {
+    return Boolean(await this.authModel.findOne({ userID: userID }).exec());
   }
 }
