@@ -137,4 +137,11 @@ export class AuthService {
   async findAuthByUserId(userID: string): Promise<boolean> {
     return Boolean(await this.authModel.findOne({ userID: userID }).exec());
   }
+
+  async logoutUser(token: string): Promise<any> {
+    const payload = await this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
+    });
+    return this.authModel.deleteOne({ userID: payload['id'] });
+  }
 }
