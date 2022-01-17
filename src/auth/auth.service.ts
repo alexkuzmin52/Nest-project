@@ -15,6 +15,7 @@ import { IAuth } from './dto/auth.interface';
 import { LoginDto } from './dto/login.dto';
 import { UserService } from '../user/user.service';
 import { UserStatusEnum } from '../user/constants/user-status-enum';
+import { MailService } from '../../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private userService: UserService,
     private configService: ConfigService,
     private jwtService: JwtService,
+    private mailService: MailService,
     @InjectModel('auth') private authModel: Model<IAuth>,
   ) {}
 
@@ -46,6 +48,7 @@ export class AuthService {
       newUser._id,
       { token: confirmToken },
     );
+    this.mailService.sendUserConfirm(newUser, confirmToken);
     return userWithToken.token;
   }
 

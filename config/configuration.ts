@@ -11,5 +11,12 @@ export const configuration = () => ({
   JWT_REFRESH_TOKEN_SECRET_LIFETIME:
     process.env.JWT_REFRESH_TOKEN_SECRET_LIFETIME,
 
-  JWT_CONFIRM_EMAIL_SECRET: process.env.JWT_CONFIRM_EMAIL_SECRET,
+  JWT_CONFIRM_EMAIL_SECRET:
+    process.env.JWT_CONFIRM_EMAIL_SECRET || 'secretconfirmemail',
+  JWT_CONFIRM_EMAIL_LIFETIME: process.env.JWT_CONFIRM_EMAIL_LIFETIME || '100d',
+
+  MAIL_HOST: process.env.MAIL_HOST || 'smtp.example.com',
+  MAIL_USER: process.env.MAIL_USER || 'user@example.com',
+  MAIL_PASSWORD: process.env.MAIL_PASSWORD || 'topsecretpassWOrd',
+  MAIL_FROM: process.env.MAIL_FROM || 'noreply@example.com',
 });
