@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -19,6 +20,7 @@ import { ChangeUserStatusDto } from './dto/change-user-status.dto';
 import { UserRole } from '../decorators/user-role.decorator';
 import { UserRoleEnum } from './constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
+import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 
 @ApiTags('Users CRUD')
 @Controller('users')
@@ -47,12 +49,12 @@ export class UserController {
   @ApiResponse({ status: 200, type: User })
   @UserRole(UserRoleEnum.USER, UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
-  @Put('/:id')
-  updateUser(
-    @Param('id', ValidatorMongoIdPipe) id: string,
-    @Body() param: UpdateUserDto,
-  ): Promise<IUser> {
-    return this.userService.updateUserByProperty(id, param);
+  @Put('')
+  updateUser(@Req() req, @Body() param: UpdateUserDto): Promise<IUser> {
+    return this.userService.updateUserByProperty(
+      req.headers.authorization,
+      param,
+    );
   }
 
   @ApiOperation({ summary: 'Change role of user by userId' })
@@ -77,6 +79,20 @@ export class UserController {
     @Body() param: ChangeUserStatusDto,
   ): Promise<IUser> {
     return this.userService.updateStatusByUserId(id, param);
+  }
+  @ApiOperation({ summary: 'Change password' })
+  @ApiResponse({ status: 200 })
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @UseGuards(UserRoleGuard)
+  @Put('pass')
+  changeUserPassword(
+    @Req() req,
+    @Body() changeUserPasswordDto: ChangeUserPasswordDto,
+  ): Promise<object> {
+    return this.userService.changePassword(
+      req.headers.authorization,
+      changeUserPasswordDto,
+    );
   }
 
   @ApiOperation({ summary: 'Delete user by userId' })

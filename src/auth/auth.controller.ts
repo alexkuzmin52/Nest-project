@@ -1,12 +1,25 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoginDto } from './dto/login.dto';
-import { CreateUserDto } from '../user/dto/create-user.dto';
-import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { ResetDto } from './dto/reset.dto';
 import { UserRole } from '../decorators/user-role.decorator';
 import { UserRoleEnum } from '../user/constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
+import { UserService } from '../user/user.service';
+import { RefreshTokenGuard } from '../guards/refresh-token.guard';
+import { IAuth } from './dto/auth.interface';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -19,7 +32,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Create and register user' })
   @ApiResponse({ status: 201, type: String })
   @Post('register')
-  register(@Body() createUserDto: CreateUserDto): Promise<string> {
+  register(@Body() createUserDto: CreateUserDto): Promise<object> {
     return this.authService.registerUser(createUserDto);
   }
 
@@ -30,10 +43,19 @@ export class AuthController {
     return this.authService.confirmUser(confirmToken);
   }
 
+  @ApiOperation({ summary: 'User refresh token' })
+  @ApiResponse({ status: 200, type: Object })
+  @UserRole(UserRoleEnum.USER, UserRoleEnum.ADMIN)
+  @UseGuards(RefreshTokenGuard)
+  @Get('refresh')
+  refresh(@Req() req): Promise<object> {
+    return this.authService.refreshUserTokens(req.headers.authorization);
+  }
+
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({ status: 200, type: String })
   @Post('login')
-  login(@Body() loginDto: LoginDto): Promise<object> {
+  login(@Body() loginDto: LoginDto): Promise<Partial<IAuth>> {
     return this.authService.loginUser(loginDto);
   }
 
@@ -41,8 +63,28 @@ export class AuthController {
   @ApiResponse({ status: 200 })
   @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @UseGuards(UserRoleGuard)
-  @Get('logout/:token')
-  logout(@Param('token') token: string): Promise<any> {
-    return this.authService.logoutUser(token);
+  @Get('logout')
+  logout(@Req() req): Promise<any> {
+    return this.authService.logoutUser(req.headers.authorization);
+  }
+
+  @ApiOperation({ summary: 'User forgot password' })
+  @ApiResponse({ status: 200 })
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @UseGuards(UserRoleGuard)
+  @Get('forgot')
+  forgot(@Req() req): Promise<object> {
+    return this.authService.forgotPassword(req.headers.authorization);
+  }
+
+  @ApiOperation({ summary: 'User reset password' })
+  @ApiResponse({ status: 200 })
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @UseGuards(UserRoleGuard)
+  // @Put('reset/:token')
+  @Put('reset/:token')
+  reset(@Param('token') token: string): Promise<object> {
+    console.log(token);
+    return this.authService.resetPassword(token);
   }
 }

@@ -12,18 +12,20 @@ import { AuthService } from '../auth/auth.service';
 import { ROLES_KEY } from '../decorators/user-role.decorator';
 
 @Injectable()
-export class UserRoleGuard implements CanActivate {
+export class RoleTokensGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private jwtService: JwtService,
     private configService: ConfigService,
     private authService: AuthService,
   ) {}
+  //   const getGuard = async (active:string): Promise<boolean> =>{
+  //
+  // }
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const req = context.switchToHttp().getRequest();
       const token = req.headers.authorization;
-      //TODO refresh token
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       });

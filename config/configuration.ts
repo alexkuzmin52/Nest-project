@@ -7,13 +7,19 @@ export const configuration = () => ({
   JWT_ACCESS_TOKEN_SECRET_LIFETIME:
     process.env.JWT_ACCESS_TOKEN_SECRET_LIFETIME || '200d',
 
-  JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET,
+  JWT_REFRESH_TOKEN_SECRET:
+    process.env.JWT_REFRESH_TOKEN_SECRET || 'lnblvsntcIFDMHmbm',
   JWT_REFRESH_TOKEN_SECRET_LIFETIME:
-    process.env.JWT_REFRESH_TOKEN_SECRET_LIFETIME,
+    process.env.JWT_REFRESH_TOKEN_SECRET_LIFETIME || '100d',
 
   JWT_CONFIRM_EMAIL_SECRET:
     process.env.JWT_CONFIRM_EMAIL_SECRET || 'secretconfirmemail',
   JWT_CONFIRM_EMAIL_LIFETIME: process.env.JWT_CONFIRM_EMAIL_LIFETIME || '100d',
+
+  JWT_FORGOT_PASSWORD_EMAIL_SECRET:
+    process.env.JWT_FORGOT_PASSWORD_EMAIL_SECRET || 'nbgfctrhtn',
+  JWT_FORGOT_PASSWORD_EMAIL_LIFETIME:
+    process.env.JWT_FORGOT_PASSWORD_EMAIL_LIFETIME || '10d',
 
   MAIL_HOST: process.env.MAIL_HOST || 'smtp.example.com',
   MAIL_USER: process.env.MAIL_USER || 'user@example.com',
