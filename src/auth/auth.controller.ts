@@ -13,21 +13,16 @@ import {
 
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { ResetDto } from './dto/reset.dto';
 import { UserRole } from '../decorators/user-role.decorator';
 import { UserRoleEnum } from '../user/constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
-import { UserService } from '../user/user.service';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 import { IAuth } from './dto/auth.interface';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private userService: UserService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @ApiOperation({ summary: 'Create and register user' })
   @ApiResponse({ status: 201, type: String })
@@ -84,7 +79,6 @@ export class AuthController {
   // @Put('reset/:token')
   @Put('reset/:token')
   reset(@Param('token') token: string): Promise<object> {
-    console.log(token);
     return this.authService.resetPassword(token);
   }
 }

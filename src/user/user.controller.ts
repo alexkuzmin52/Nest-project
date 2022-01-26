@@ -21,15 +21,16 @@ import { UserRole } from '../decorators/user-role.decorator';
 import { UserRoleEnum } from './constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
+// import { LoggerMiddleware } from './middlewares/app-logger.middleware';
 
 @ApiTags('Users CRUD')
+@UserRole(UserRoleEnum.ADMIN)
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
 
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, type: [User] })
-  @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Get('')
   getAllUsers(): Promise<IUser[]> {
@@ -38,7 +39,6 @@ export class UserController {
 
   @ApiOperation({ summary: 'Get user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Get('/:id')
   getUser(@Param('id', ValidatorMongoIdPipe) id: string): Promise<IUser> {
@@ -47,7 +47,7 @@ export class UserController {
 
   @ApiOperation({ summary: 'Update user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UserRole(UserRoleEnum.USER, UserRoleEnum.ADMIN)
+  @UserRole(UserRoleEnum.USER)
   @UseGuards(UserRoleGuard)
   @Put('')
   updateUser(@Req() req, @Body() param: UpdateUserDto): Promise<IUser> {
@@ -59,7 +59,6 @@ export class UserController {
 
   @ApiOperation({ summary: 'Change role of user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Put('role/:id')
   changeUserRole(
@@ -71,7 +70,6 @@ export class UserController {
 
   @ApiOperation({ summary: 'Change status of user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Put('status/:id')
   changeUserStatus(
@@ -80,9 +78,10 @@ export class UserController {
   ): Promise<IUser> {
     return this.userService.updateStatusByUserId(id, param);
   }
+
   @ApiOperation({ summary: 'Change password' })
   @ApiResponse({ status: 200 })
-  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @UserRole(UserRoleEnum.USER)
   @UseGuards(UserRoleGuard)
   @Put('pass')
   changeUserPassword(
@@ -97,7 +96,6 @@ export class UserController {
 
   @ApiOperation({ summary: 'Delete user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Delete(':id')
   DeleteUser(@Param('id', ValidatorMongoIdPipe) id: string): Promise<IUser> {

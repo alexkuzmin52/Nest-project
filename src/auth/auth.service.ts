@@ -130,11 +130,9 @@ export class AuthService {
     const authByUserId = await this.authModel
       .findOne({ userID: userID })
       .exec();
-    console.log('authByUserId', authByUserId);
     if (!authByUserId) {
       throw new ForbiddenException('missing valid token');
     }
-    console.log('checkIsValidAuth', authByUserId);
     const isExistValidToken =
       authByUserId.access_token === token ||
       authByUserId.refresh_token === token;
@@ -142,7 +140,6 @@ export class AuthService {
     if (!isExistValidToken) {
       throw new ForbiddenException('missing valid token');
     }
-    console.log(isExistValidToken);
 
     return authByUserId;
   }
@@ -160,7 +157,6 @@ export class AuthService {
     });
 
     const userForgot = await this.userService.getUserById(payload.id);
-    console.log(userForgot);
     const forgotToken = this.jwtService.sign(
       {
         email: userForgot.email,

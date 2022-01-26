@@ -48,7 +48,6 @@ export class UserService {
   }
 
   async createUser(userDto: CreateUserDto): Promise<IUser> {
-    console.log(userDto);
     const newUser = new this.userModel(userDto);
     return await newUser.save();
   }
@@ -87,12 +86,10 @@ export class UserService {
     userID: string,
     property: ChangeUserStatusDto,
   ): Promise<IUser> {
-    console.log('userID', userID);
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, property, { new: true })
       .select(['-password'])
       .exec();
-    console.log('updatedUser', updatedUser);
 
     if (!updatedUser) {
       throw new NotFoundException('user not found');

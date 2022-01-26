@@ -23,18 +23,16 @@ export class UserRoleGuard implements CanActivate {
     try {
       const req = context.switchToHttp().getRequest();
       const token = req.headers.authorization;
-      //TODO refresh token
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       });
-      console.log('const payload', payload);
       await this.authService.checkIsValidAuth(payload.id, token);
       await this.authService.checkIsValidUser(payload.id);
 
-      const requiredRole = this.reflector.getAllAndOverride<string[]>(
-        ROLES_KEY,
-        [context.getHandler(), context.getClass()],
-      );
+      const requiredRole = this.reflector.getAllAndMerge<string[]>(ROLES_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]);
 
       if (!requiredRole) {
         return true;
