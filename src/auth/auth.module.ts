@@ -4,14 +4,15 @@ import { forwardRef, Module } from '@nestjs/common';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { MailModule } from '../../mail/mail.module';
 import { UserModule } from '../user/user.module';
 import { authSchema } from './schemas/auth-schema';
-import { MailService } from '../../mail/mail.service';
-import { MailModule } from '../../mail/mail.module';
+import { LogModule } from '../log/log.module';
 
 @Module({
   imports: [
     JwtModule.register({}),
+    LogModule,
     MailModule,
     MongooseModule.forFeature([{ name: 'auth', schema: authSchema }]),
     forwardRef(() => UserModule),

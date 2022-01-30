@@ -1,8 +1,8 @@
 import * as bcrypt from 'bcrypt';
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,7 +12,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 
+import { ActionEnum } from '../log/constants/action-enum';
+import { AuthType } from './schemas/auth-schema';
 import { IAuth } from './dto/auth.interface';
+import { LogService } from '../log/log.service';
 import { LoginDto } from './dto/login.dto';
 import { MailService } from '../../mail/mail.service';
 import { UserService } from '../user/user.service';
@@ -22,11 +25,12 @@ import { generateRandomPassword } from './helpers/generate-random-password';
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
     private configService: ConfigService,
     private jwtService: JwtService,
+    private logService: LogService,
     private mailService: MailService,
-    @InjectModel('auth') private authModel: Model<IAuth>,
+    private userService: UserService,
+    @InjectModel('auth') private authModel: Model<AuthType>,
   ) {}
 
   async registerUser(createUserDto: CreateUserDto): Promise<object> {
@@ -47,6 +51,11 @@ export class AuthService {
     });
 
     await this.mailService.sendUserConfirm(newUser, confirmToken);
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_REGISTER,
+      userId: newUser._id,
+    });
 
     return {
       message:
@@ -73,21 +82,22 @@ export class AuthService {
       const payload = await this.jwtService.verify(confirmToken, {
         secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
       });
-      // const userByConfirmToken = await this.userService.findUserByParam({
+
       await this.userService.findUserByParam({
         token: confirmToken,
       });
 
-      // if (
-      //   !userByConfirmToken ||
-      //   userByConfirmToken.status !== UserStatusEnum.PENDING
-      // ) {
-      //   throw new UnauthorizedException('Invalid credentials');
-      // }
+      const confirmedUser = await this.userService.updateUserByParam(
+        payload['id'],
+        {
+          status: UserStatusEnum.CONFIRMED,
+          token: null,
+        },
+      );
 
-      await this.userService.updateUserByParam(payload['id'], {
-        status: UserStatusEnum.CONFIRMED,
-        token: null,
+      await this.logService.createLog({
+        event: ActionEnum.USER_CONFIRMED,
+        userId: confirmedUser._id,
       });
 
       return { message: 'Registration successfully confirmed. Please login' };
@@ -101,9 +111,6 @@ export class AuthService {
       email: loginDto.email,
     });
 
-    // if (!userLogin) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
     const isValidPassword = await bcrypt.compare(
       loginDto.password,
       userLogin.password,
@@ -123,6 +130,11 @@ export class AuthService {
 
     await newAuthModel.save();
 
+    await this.logService.createLog({
+      event: ActionEnum.USER_LOGIN,
+      userId: userLogin._id,
+    });
+
     return tokensPair;
   }
 
@@ -133,6 +145,7 @@ export class AuthService {
     if (!authByUserId) {
       throw new ForbiddenException('missing valid token');
     }
+
     const isExistValidToken =
       authByUserId.access_token === token ||
       authByUserId.refresh_token === token;
@@ -144,11 +157,18 @@ export class AuthService {
     return authByUserId;
   }
 
-  async logoutUser(token: string): Promise<any> {
-    const payload = await this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
+  async logoutUser(authId: string): Promise<any> {
+    const deletedAuth = this.authModel.deleteOne({ userID: authId });
+    if (!deletedAuth) {
+      throw new NotFoundException('user for delete not found');
+    }
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_LOGOUT,
+      userId: authId,
     });
-    return this.authModel.deleteOne({ userID: payload['id'] });
+
+    return deletedAuth;
   }
 
   async forgotPassword(token: string): Promise<object> {
@@ -157,6 +177,7 @@ export class AuthService {
     });
 
     const userForgot = await this.userService.getUserById(payload.id);
+
     const forgotToken = this.jwtService.sign(
       {
         email: userForgot.email,
@@ -168,14 +189,12 @@ export class AuthService {
         expiresIn: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_LIFETIME'),
       },
     );
-    // const updatedUserForgot = await this.userService.updateUserByParam(
-    //   payload.id,
-    //   {
-    //     token: forgotToken,
-    //   },
-    // );
-    // // await this.mailService.sendUserForgot(updatedUserForgot, forgotToken);
-    // await this.mailService.sendUserForgot(updatedUserForgot, forgotToken);
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_FORGOT_PASSWORD,
+      userId: userForgot._id,
+    });
+
     return {
       link: `http://localhost:3000/auth/reset/${forgotToken}`,
     };
@@ -199,6 +218,12 @@ export class AuthService {
     await this.authModel.deleteOne({ userID: updatedUser._id });
 
     await this.mailService.sendTemporaryPassword(updatedUser, newPassword);
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_RESET_PASSWORD,
+      userId: updatedUser._id,
+    });
+
     return {
       message: 'Information with a new passport has been sent to your mail',
     };
@@ -206,6 +231,10 @@ export class AuthService {
 
   async checkIsValidUser(id: string): Promise<IUser> {
     const validUser = await this.userService.getUserById(id);
+
+    if (!validUser) {
+      throw new ForbiddenException('User not found');
+    }
 
     if (validUser && validUser.status === 'blocked') {
       throw new ForbiddenException(
@@ -215,12 +244,8 @@ export class AuthService {
     return validUser;
   }
 
-  async refreshUserTokens(refreshToken: string): Promise<any> {
-    const payload = await this.jwtService.verify(refreshToken, {
-      secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
-    });
-
-    const refreshUser = await this.userService.getUserById(payload.id);
+  async refreshUserTokens(authId: string): Promise<any> {
+    const refreshUser = await this.userService.getUserById(authId);
 
     const tokensPair = (await this.createTokensPair(
       refreshUser,
@@ -235,6 +260,11 @@ export class AuthService {
     });
 
     await newAuthModel.save();
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_REFRESH_TOKEN,
+      userId: authId,
+    });
 
     return tokensPair;
   }

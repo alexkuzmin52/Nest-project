@@ -2,7 +2,6 @@ import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -19,6 +18,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserStatusEnum } from './constants/user-status-enum';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
+import { LogService } from '../log/log.service';
+import { ActionEnum } from '../log/constants/action-enum';
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,7 @@ export class UserService {
     @InjectModel(User.name) private userModel: Model<UserType>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private logService: LogService,
   ) {}
 
   async getUsers(): Promise<IUser[]> {
@@ -39,11 +41,6 @@ export class UserService {
     if (!userById) {
       throw new NotFoundException('user not found');
     }
-    // if (userById.status === 'blocked') {
-    //   throw new ForbiddenException(
-    //     'Your account is blocked. Information by phone +380661111111',
-    //   );
-    // }
     return userById;
   }
 
@@ -53,24 +50,27 @@ export class UserService {
   }
 
   async updateUserByProperty(
-    token: string,
+    authId: string,
     property: UpdateUserDto,
   ): Promise<IUser> {
-    const payload = this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
-    });
     const updatedUser = await this.userModel
-      .findByIdAndUpdate(payload.id, property, { new: true })
+      .findByIdAndUpdate(authId, property, { new: true })
       .select(['-password'])
       .exec();
     if (!updatedUser) {
       throw new NotFoundException('user not found');
     }
+    await this.logService.createLog({
+      event: ActionEnum.USER_UPDATE,
+      userId: authId,
+      data: property,
+    });
     return updatedUser;
   }
   async updateRoleByUserId(
     userID: string,
     property: ChangeUserRoleDto,
+    authId: string,
   ): Promise<IUser> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, property, { new: true })
@@ -79,12 +79,20 @@ export class UserService {
     if (!updatedUser) {
       throw new NotFoundException('user not found');
     }
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_CHANGE_ROLE,
+      userId: authId,
+      data: { user: updatedUser._id, role: updatedUser.role },
+    });
+
     return updatedUser;
   }
 
   async updateStatusByUserId(
     userID: string,
     property: ChangeUserStatusDto,
+    authId: string,
   ): Promise<IUser> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, property, { new: true })
@@ -94,10 +102,17 @@ export class UserService {
     if (!updatedUser) {
       throw new NotFoundException('user not found');
     }
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_CHANGE_STATUS,
+      userId: authId,
+      data: { user: updatedUser._id, status: updatedUser.status },
+    });
+
     return updatedUser;
   }
 
-  async removeUserById(id: string): Promise<IUser> {
+  async removeUserById(id: string, authId: string): Promise<IUser> {
     const deletedUser = await this.userModel
       .findByIdAndDelete(id)
       .select(['-password'])
@@ -105,6 +120,13 @@ export class UserService {
     if (!deletedUser) {
       throw new NotFoundException('user not found');
     }
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_DELETED,
+      userId: authId,
+      data: { user: deletedUser._id },
+    });
+
     return deletedUser;
   }
 

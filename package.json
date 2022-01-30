@@ -33,6 +33,7 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.2",
     "handlebars": "^4.7.7",
+    "jwt-decode": "^3.1.2",
     "mongoose": "^6.1.6",
     "nodemailer": "^6.7.2",
     "passport-jwt": "^4.0.0",

@@ -18,6 +18,7 @@ import { UserRoleEnum } from '../user/constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 import { IAuth } from './dto/auth.interface';
+import { AuthId } from '../decorators/auth-id.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -43,8 +44,8 @@ export class AuthController {
   @UserRole(UserRoleEnum.USER, UserRoleEnum.ADMIN)
   @UseGuards(RefreshTokenGuard)
   @Get('refresh')
-  refresh(@Req() req): Promise<object> {
-    return this.authService.refreshUserTokens(req.headers.authorization);
+  refresh(@AuthId() authid: string): Promise<object> {
+    return this.authService.refreshUserTokens(authid);
   }
 
   @ApiOperation({ summary: 'User login' })
@@ -59,8 +60,8 @@ export class AuthController {
   @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @UseGuards(UserRoleGuard)
   @Get('logout')
-  logout(@Req() req): Promise<any> {
-    return this.authService.logoutUser(req.headers.authorization);
+  logout(@AuthId() authId: string): Promise<any> {
+    return this.authService.logoutUser(authId);
   }
 
   @ApiOperation({ summary: 'User forgot password' })
@@ -76,7 +77,6 @@ export class AuthController {
   @ApiResponse({ status: 200 })
   @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
   @UseGuards(UserRoleGuard)
-  // @Put('reset/:token')
   @Put('reset/:token')
   reset(@Param('token') token: string): Promise<object> {
     return this.authService.resetPassword(token);

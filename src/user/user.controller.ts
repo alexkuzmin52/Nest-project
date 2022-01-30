@@ -21,17 +21,18 @@ import { UserRole } from '../decorators/user-role.decorator';
 import { UserRoleEnum } from './constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
-// import { LoggerMiddleware } from './middlewares/app-logger.middleware';
+import { Request } from 'express';
+import { AuthId } from '../decorators/auth-id.decorator';
 
 @ApiTags('Users CRUD')
 @UserRole(UserRoleEnum.ADMIN)
 @Controller('users')
+@UseGuards(UserRoleGuard)
 export class UserController {
   constructor(private userService: UserService) {}
 
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, type: [User] })
-  @UseGuards(UserRoleGuard)
   @Get('')
   getAllUsers(): Promise<IUser[]> {
     return this.userService.getUsers();
@@ -39,7 +40,6 @@ export class UserController {
 
   @ApiOperation({ summary: 'Get user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UseGuards(UserRoleGuard)
   @Get('/:id')
   getUser(@Param('id', ValidatorMongoIdPipe) id: string): Promise<IUser> {
     return this.userService.getUserById(id);
@@ -48,41 +48,39 @@ export class UserController {
   @ApiOperation({ summary: 'Update user by userId' })
   @ApiResponse({ status: 200, type: User })
   @UserRole(UserRoleEnum.USER)
-  @UseGuards(UserRoleGuard)
   @Put('')
-  updateUser(@Req() req, @Body() param: UpdateUserDto): Promise<IUser> {
-    return this.userService.updateUserByProperty(
-      req.headers.authorization,
-      param,
-    );
+  updateUser(
+    @AuthId() authId: string,
+    @Body() param: UpdateUserDto,
+  ): Promise<IUser> {
+    return this.userService.updateUserByProperty(authId, param);
   }
 
   @ApiOperation({ summary: 'Change role of user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UseGuards(UserRoleGuard)
   @Put('role/:id')
   changeUserRole(
+    @AuthId() authId: string,
     @Param('id', ValidatorMongoIdPipe) id: string,
     @Body() param: ChangeUserRoleDto,
   ): Promise<IUser> {
-    return this.userService.updateRoleByUserId(id, param);
+    return this.userService.updateRoleByUserId(id, param, authId);
   }
 
   @ApiOperation({ summary: 'Change status of user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UseGuards(UserRoleGuard)
   @Put('status/:id')
   changeUserStatus(
+    @AuthId() authId: string,
     @Param('id', ValidatorMongoIdPipe) id: string,
     @Body() param: ChangeUserStatusDto,
   ): Promise<IUser> {
-    return this.userService.updateStatusByUserId(id, param);
+    return this.userService.updateStatusByUserId(id, param, authId);
   }
 
   @ApiOperation({ summary: 'Change password' })
   @ApiResponse({ status: 200 })
   @UserRole(UserRoleEnum.USER)
-  @UseGuards(UserRoleGuard)
   @Put('pass')
   changeUserPassword(
     @Req() req,
@@ -96,9 +94,11 @@ export class UserController {
 
   @ApiOperation({ summary: 'Delete user by userId' })
   @ApiResponse({ status: 200, type: User })
-  @UseGuards(UserRoleGuard)
   @Delete(':id')
-  DeleteUser(@Param('id', ValidatorMongoIdPipe) id: string): Promise<IUser> {
-    return this.userService.removeUserById(id);
+  deleteUser(
+    @AuthId() authId: string,
+    @Param('id', ValidatorMongoIdPipe) id: string,
+  ): Promise<IUser> {
+    return this.userService.removeUserById(id, authId);
   }
 }

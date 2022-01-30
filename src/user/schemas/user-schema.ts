@@ -19,7 +19,6 @@ export class User {
   @Prop({ required: true, unique: true })
   email: string;
   @ApiProperty({ example: 'passWOrd123', description: 'password' })
-  // @Prop({ required: true, select: false })
   @Prop({ required: true })
   password: string;
   @ApiPropertyOptional({ example: 'user' || null, description: 'Role' })

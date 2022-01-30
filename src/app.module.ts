@@ -5,8 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { configuration } from '../config/configuration';
 import { MailModule } from '../mail/mail.module';
-import { AppLoggerMiddleware } from './user/middlewares/app-logger.middleware';
-// import { AppLoggerMiddleware } from './user/middlewares/app-logger.middleware';
+import { LogModule } from './log/log.module';
 
 @Module({
   imports: [
@@ -19,6 +18,7 @@ import { AppLoggerMiddleware } from './user/middlewares/app-logger.middleware';
     MongooseModule.forRoot('mongodb://localhost:27017/nest-api'),
     AuthModule,
     MailModule,
+    LogModule,
   ],
   controllers: [],
   providers: [],

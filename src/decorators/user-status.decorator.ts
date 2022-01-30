@@ -1,4 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
+
 import { UserStatusEnum } from '../user/constants/user-status-enum';
 
 export const STATUSES_KEY = 'statuses';

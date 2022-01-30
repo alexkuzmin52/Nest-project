@@ -33,14 +33,6 @@ export class UpdateUserDto {
   @IsString()
   @Length(2, 20)
   surname: string;
-  // @ApiProperty({ example: 'alex@some.com', description: 'Email of the Use' })
-  // @IsNotEmpty()
-  // @IsEmail()
-  // email: string;
-  // @ApiProperty({ example: 'passWOrd123', description: 'password' })
-  // @IsNotEmpty()
-  // @IsString()
-  // password: string;
   @ApiPropertyOptional({ example: 33, description: 'Age' })
   @IsOptional()
   @IsInt()
