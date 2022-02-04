@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from '../user/dto/create-user.dto';
-import { IUser } from '../user/dto/user.inetrface';
+import { IUser } from '../user/dto/user.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';

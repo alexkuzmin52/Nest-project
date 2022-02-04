@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 
-import { IUser } from '../src/user/dto/user.inetrface';
+import { IUser } from '../src/user/dto/user.interface';
 
 @Injectable()
 export class MailService {

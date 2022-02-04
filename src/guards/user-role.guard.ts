@@ -28,7 +28,6 @@ export class UserRoleGuard implements CanActivate {
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       });
-
       await this.authService.checkIsValidAuth(payload.id, token);
       await this.authService.checkIsValidUser(payload.id);
 

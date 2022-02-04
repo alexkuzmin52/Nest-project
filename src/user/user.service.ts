@@ -1,25 +1,27 @@
 import * as bcrypt from 'bcrypt';
-import { InjectModel } from '@nestjs/mongoose';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import { ActionEnum } from '../log/constants/action-enum';
+import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { ChangeUserRoleDto } from './dto/change-user-role.dto';
 import { ChangeUserStatusDto } from './dto/change-user-status.dto';
+import { ConfigService } from '@nestjs/config';
 import { CreateUserDto } from './dto/create-user.dto';
-import { IUser } from './dto/user.inetrface';
+import { IUser } from './dto/user.interface';
+import { JwtService } from '@nestjs/jwt';
+import { LogService } from '../log/log.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserType } from './schemas/user-schema';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { UserFilterDto } from './dto/user-filter.dto';
+import { UserFilterQueryDto } from './dto/user-filter-query.dto';
 import { UserStatusEnum } from './constants/user-status-enum';
-import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
-import { LogService } from '../log/log.service';
-import { ActionEnum } from '../log/constants/action-enum';
 
 @Injectable()
 export class UserService {
@@ -57,14 +59,17 @@ export class UserService {
       .findByIdAndUpdate(authId, property, { new: true })
       .select(['-password'])
       .exec();
+
     if (!updatedUser) {
       throw new NotFoundException('user not found');
     }
+
     await this.logService.createLog({
       event: ActionEnum.USER_UPDATE,
       userId: authId,
       data: property,
     });
+
     return updatedUser;
   }
   async updateRoleByUserId(
@@ -76,6 +81,7 @@ export class UserService {
       .findByIdAndUpdate(userID, property, { new: true })
       .select(['-password'])
       .exec();
+
     if (!updatedUser) {
       throw new NotFoundException('user not found');
     }
@@ -188,6 +194,7 @@ export class UserService {
       changeUserPasswordDto.password,
       10,
     );
+
     await this.userModel
       .updateOne(
         { _id: payload.id },
@@ -196,5 +203,28 @@ export class UserService {
       )
       .exec();
     return { message: 'Passport successfully changed' };
+  }
+
+  async getUsersByFilter(query: UserFilterQueryDto): Promise<IUser[]> {
+    console.log(query);
+    const {
+      sortingField,
+      sortingDirection,
+      ageMin,
+      ageMax,
+      limit,
+      page,
+      ...rest
+    } = query;
+    const age = { $gte: ageMin, $lte: ageMax };
+    const skip = limit * (page - 1);
+    const filter: UserFilterDto = { ...rest, age };
+
+    return await this.userModel
+      .find(filter, { password: 0 })
+      .sort([[sortingField, sortingDirection]])
+      .skip(skip)
+      .limit(limit)
+      .exec();
   }
 }

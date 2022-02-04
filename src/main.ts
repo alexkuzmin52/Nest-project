@@ -13,9 +13,18 @@ async function bootstrap() {
     .setTitle('Users')
     .setDescription('Users CRUD and Authorization')
     .setVersion('1.0')
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'access-key',
+    )
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('doc', app, document);
 
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
