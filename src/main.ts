@@ -7,6 +7,8 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // app.setGlobalPrefix('api');
+
   const configService = app.get(ConfigService);
   const port = configService.get('port');
   const config = new DocumentBuilder()
@@ -29,7 +31,6 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
-
   await app.listen(port, () => {
     Logger.log(`Server listen on port ${port}`);
   });

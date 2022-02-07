@@ -1,4 +1,5 @@
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs-extra';
 import {
   BadRequestException,
   Injectable,
@@ -22,6 +23,10 @@ import { User, UserType } from './schemas/user-schema';
 import { UserFilterDto } from './dto/user-filter.dto';
 import { UserFilterQueryDto } from './dto/user-filter-query.dto';
 import { UserStatusEnum } from './constants/user-status-enum';
+import { SetUserPhotoDto } from './dto/set-user-photo.dto';
+import { FileService } from '../file/file.service';
+import { IFile } from '../file/dto/file.interface';
+import * as path from 'path';
 
 @Injectable()
 export class UserService {
@@ -30,6 +35,7 @@ export class UserService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private logService: LogService,
+    private fileService: FileService,
   ) {}
 
   async getUsers(): Promise<IUser[]> {
@@ -226,5 +232,29 @@ export class UserService {
       .skip(skip)
       .limit(limit)
       .exec();
+  }
+
+  async setUserPhoto(
+    authId: string,
+    file: Express.Multer.File,
+    setUserPhotoDto: SetUserPhotoDto,
+  ): Promise<IUser> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      authId,
+      { photo: file.originalname },
+      { new: true },
+    );
+
+    await this.fileService.setSingleFile(setUserPhotoDto as IFile, authId);
+    const pathBase = `${process.cwd()}/upload`;
+    // const pathIn = `${process.cwd()}/upload/${file.originalname}`;
+    // const pathDest = `${process.cwd()}/upload/${setUserPhotoDto.affiliation}/
+    const pathIn = `${pathBase}/${file.originalname}`;
+    const pathDest = `${pathBase}/${setUserPhotoDto.affiliation}/
+    ${setUserPhotoDto.mime}/${file.originalname}`;
+
+    await fs.move(pathIn, pathDest);
+
+    return updatedUser;
   }
 }

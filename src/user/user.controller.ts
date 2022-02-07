@@ -10,11 +10,15 @@ import {
   Delete,
   Get,
   Param,
+  Post,
   Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { AuthId } from '../decorators/auth-id.decorator';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
@@ -29,6 +33,8 @@ import { UserRoleEnum } from './constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
 import { UserService } from './user.service';
 import { ValidatorMongoIdPipe } from './pipes/validator-mongo-id.pipe';
+import { SetUserPhotoDto } from './dto/set-user-photo.dto';
+import { SingleFile } from '../decorators/single-file.decorator';
 
 @ApiTags('Users CRUD')
 @UserRole(UserRoleEnum.ADMIN)
@@ -42,7 +48,8 @@ export class UserController {
   @Get('')
   @ApiSecurity('access-key')
   getAllUsers(): Promise<IUser[]> {
-    return this.userService.getUsers();
+    const test = this.userService.getUsers();
+    return test;
   }
 
   @ApiOperation({ summary: 'Get user by userId' })
@@ -124,5 +131,19 @@ export class UserController {
     @Query() query: UserFilterQueryDto,
   ): Promise<IUser[]> {
     return this.userService.getUsersByFilter(query);
+  }
+
+  @ApiOperation({ summary: 'Set  or change User photo' })
+  @ApiResponse({ status: 200, type: User })
+  @ApiSecurity('access-key')
+  @SingleFile()
+  @Post('photo')
+  setPhoto(
+    @AuthId() authId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() setUserPhotoDto: SetUserPhotoDto,
+  ): Promise<any> {
+    setUserPhotoDto.file = file.originalname;
+    return this.userService.setUserPhoto(authId, file, setUserPhotoDto);
   }
 }

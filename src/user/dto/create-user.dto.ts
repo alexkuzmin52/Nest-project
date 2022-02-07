@@ -20,8 +20,8 @@ import { UserGenderEnum } from '../constants/user-gender-enum';
 export class CreateUserDto {
   @ApiProperty({
     type: String,
-    minimum: 2,
-    maximum: 20,
+    minLength: 2,
+    maxLength: 20,
     description: 'Username',
     example: 'Alex',
   })
@@ -32,8 +32,8 @@ export class CreateUserDto {
 
   @ApiProperty({
     type: String,
-    minimum: 2,
-    maximum: 20,
+    minLength: 2,
+    maxLength: 20,
     description: 'UserSurname',
     example: 'Kuzmin',
   })
@@ -44,7 +44,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     type: String,
-    minimum: 6,
+    minLength: 6,
     description: 'Email',
     example: 'someEmail@site.com',
   })
@@ -54,7 +54,7 @@ export class CreateUserDto {
 
   @ApiProperty({
     type: String,
-    minimum: 6,
+    minLength: 6,
     description: 'Password',
     example: 'pAsSwOrd',
   })
@@ -91,7 +91,7 @@ export class CreateUserDto {
     type: String,
     description: 'Gender',
     example: 'male',
-    enum: ['male', 'female'],
+    enum: UserGenderEnum,
   })
   @IsOptional()
   @IsEnum(UserGenderEnum)
