@@ -18,21 +18,21 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { AuthId } from '../decorators/auth-id.decorator';
+import { AuthId } from '../../decorators/auth-id.decorator';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { ChangeUserRoleDto } from './dto/change-user-role.dto';
 import { ChangeUserStatusDto } from './dto/change-user-status.dto';
 import { IUser } from './dto/user.interface';
 import { SetUserPhotoDto } from './dto/set-user-photo.dto';
-import { SingleFile } from '../decorators/single-file.decorator';
+import { SingleFile } from '../../decorators/single-file.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './schemas/user-schema';
 import { UserFilterQueryDto } from './dto/user-filter-query.dto';
-import { UserRole } from '../decorators/user-role.decorator';
-import { UserRoleEnum } from './constants/user-role-enum';
-import { UserRoleGuard } from '../guards/user-role.guard';
+import { UserRole } from '../../decorators/user-role.decorator';
+import { UserRoleEnum } from '../../constants/user-role-enum';
+import { UserRoleGuard } from '../../guards/user-role.guard';
 import { UserService } from './user.service';
-import { ValidatorMongoIdPipe } from './pipes/validator-mongo-id.pipe';
+import { ValidatorMongoIdPipe } from '../../pipes/validator-mongo-id.pipe';
 
 @ApiTags('Users CRUD')
 @UserRole(UserRoleEnum.ADMIN)

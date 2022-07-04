@@ -14,8 +14,8 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { RegexEnum } from '../constants/regex-enum';
-import { UserGenderEnum } from '../constants/user-gender-enum';
+import { RegexEnum } from '../../../constants/regex-enum';
+import { UserGenderEnum } from '../../../constants/user-gender-enum';
 
 export class CreateUserDto {
   @ApiProperty({

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { UserStatusEnum } from '../constants/user-status-enum';
+import { UserStatusEnum } from '../../../constants/user-status-enum';
 
 export class ChangeUserStatusDto {
   @ApiProperty({ description: 'User role' })

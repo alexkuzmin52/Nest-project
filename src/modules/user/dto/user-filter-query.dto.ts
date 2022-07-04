@@ -10,9 +10,9 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { UserGenderEnum } from '../constants/user-gender-enum';
-import { UserRoleEnum } from '../constants/user-role-enum';
-import { UserStatusEnum } from '../constants/user-status-enum';
+import { UserGenderEnum } from '../../../constants/user-gender-enum';
+import { UserRoleEnum } from '../../../constants/user-role-enum';
+import { UserStatusEnum } from '../../../constants/user-status-enum';
 
 export class UserFilterQueryDto {
   @ApiPropertyOptional({

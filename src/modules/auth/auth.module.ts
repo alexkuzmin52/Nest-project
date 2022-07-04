@@ -5,7 +5,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LogModule } from '../log/log.module';
-import { MailModule } from '../../mail/mail.module';
+import { MailModule } from '../../../mail/mail.module';
 import { UserModule } from '../user/user.module';
 import { authSchema } from './schemas/auth-schema';
 

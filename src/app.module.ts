@@ -2,11 +2,11 @@ import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { AuthModule } from './auth/auth.module';
-import { FileModule } from './file/file.module';
-import { LogModule } from './log/log.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { FileModule } from './modules/file/file.module';
+import { LogModule } from './modules/log/log.module';
 import { MailModule } from '../mail/mail.module';
-import { UserModule } from './user/user.module';
+import { UserModule } from './modules/user/user.module';
 import { configuration } from '../config/configuration';
 
 @Module({

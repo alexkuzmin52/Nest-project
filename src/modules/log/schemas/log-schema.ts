@@ -2,7 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { User } from '../../user/schemas/user-schema';
 import { ILog } from '../dto/log.interface';
-import { Document } from 'mongoose';
 
 export type LogType = ILog & mongoose.Document;
 @Schema({ timestamps: true })

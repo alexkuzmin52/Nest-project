@@ -17,9 +17,9 @@ import { AuthType } from './schemas/auth-schema';
 import { IAuth } from './dto/auth.interface';
 import { LogService } from '../log/log.service';
 import { LoginDto } from './dto/login.dto';
-import { MailService } from '../../mail/mail.service';
+import { MailService } from '../../../mail/mail.service';
 import { UserService } from '../user/user.service';
-import { UserStatusEnum } from '../user/constants/user-status-enum';
+import { UserStatusEnum } from '../../constants/user-status-enum';
 import { generateRandomPassword } from './helpers/generate-random-password';
 
 @Injectable()
