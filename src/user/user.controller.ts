@@ -16,15 +16,15 @@ import {
   Req,
   UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 import { AuthId } from '../decorators/auth-id.decorator';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { ChangeUserRoleDto } from './dto/change-user-role.dto';
 import { ChangeUserStatusDto } from './dto/change-user-status.dto';
 import { IUser } from './dto/user.interface';
+import { SetUserPhotoDto } from './dto/set-user-photo.dto';
+import { SingleFile } from '../decorators/single-file.decorator';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './schemas/user-schema';
 import { UserFilterQueryDto } from './dto/user-filter-query.dto';
@@ -33,8 +33,6 @@ import { UserRoleEnum } from './constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
 import { UserService } from './user.service';
 import { ValidatorMongoIdPipe } from './pipes/validator-mongo-id.pipe';
-import { SetUserPhotoDto } from './dto/set-user-photo.dto';
-import { SingleFile } from '../decorators/single-file.decorator';
 
 @ApiTags('Users CRUD')
 @UserRole(UserRoleEnum.ADMIN)
@@ -48,8 +46,8 @@ export class UserController {
   @Get('')
   @ApiSecurity('access-key')
   getAllUsers(): Promise<IUser[]> {
-    const test = this.userService.getUsers();
-    return test;
+    const users = this.userService.getUsers();
+    return users;
   }
 
   @ApiOperation({ summary: 'Get user by userId' })

@@ -26,7 +26,6 @@ import { UserStatusEnum } from './constants/user-status-enum';
 import { SetUserPhotoDto } from './dto/set-user-photo.dto';
 import { FileService } from '../file/file.service';
 import { IFile } from '../file/dto/file.interface';
-import * as path from 'path';
 
 @Injectable()
 export class UserService {
@@ -165,7 +164,7 @@ export class UserService {
     ) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return userByConfirmToken;
+    return userByConfirmToken; //TODO might void type instead IUser
   }
 
   async findUserByEmail(email: Partial<IUser>): Promise<IUser> {
@@ -176,7 +175,7 @@ export class UserService {
         `User with this e-mail ${userByEmail.email} is already registered`,
       );
     }
-    return userByEmail;
+    return userByEmail; //TODO might void type instead IUser
   }
   async findUserLoginByEmail(email: Partial<IUser>): Promise<IUser> {
     const userLoginByEmail = await this.userModel.findOne(email).exec();
@@ -212,7 +211,6 @@ export class UserService {
   }
 
   async getUsersByFilter(query: UserFilterQueryDto): Promise<IUser[]> {
-    console.log(query);
     const {
       sortingField,
       sortingDirection,
@@ -246,14 +244,13 @@ export class UserService {
     );
 
     await this.fileService.setSingleFile(setUserPhotoDto as IFile, authId);
+
     const pathBase = `${process.cwd()}/upload`;
-    // const pathIn = `${process.cwd()}/upload/${file.originalname}`;
-    // const pathDest = `${process.cwd()}/upload/${setUserPhotoDto.affiliation}/
     const pathIn = `${pathBase}/${file.originalname}`;
     const pathDest = `${pathBase}/${setUserPhotoDto.affiliation}/
     ${setUserPhotoDto.mime}/${file.originalname}`;
 
-    await fs.move(pathIn, pathDest);
+    await fs.move(pathIn, pathDest, { overwrite: true });
 
     return updatedUser;
   }

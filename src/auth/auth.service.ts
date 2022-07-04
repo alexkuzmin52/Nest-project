@@ -130,6 +130,9 @@ export class AuthService {
 
     await newAuthModel.save();
 
+    await this.userService.updateUserByParam(userLogin._id, {
+      status: UserStatusEnum.ACTIVE,
+    });
     await this.logService.createLog({
       event: ActionEnum.USER_LOGIN,
       userId: userLogin._id,
@@ -163,6 +166,10 @@ export class AuthService {
       throw new NotFoundException('user for delete not found');
     }
 
+    await this.userService.updateUserByParam(authId, {
+      status: UserStatusEnum.CONFIRMED,
+    });
+
     await this.logService.createLog({
       event: ActionEnum.USER_LOGOUT,
       userId: authId,
@@ -194,6 +201,8 @@ export class AuthService {
       event: ActionEnum.USER_FORGOT_PASSWORD,
       userId: userForgot._id,
     });
+
+    await this.mailService.sendUserForgot(userForgot, forgotToken);
 
     return {
       link: `http://localhost:3000/auth/reset/${forgotToken}`,

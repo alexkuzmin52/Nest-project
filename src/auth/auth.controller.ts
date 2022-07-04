@@ -11,14 +11,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { AuthId } from '../decorators/auth-id.decorator';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { IAuth } from './dto/auth.interface';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 import { UserRole } from '../decorators/user-role.decorator';
 import { UserRoleEnum } from '../user/constants/user-role-enum';
 import { UserRoleGuard } from '../guards/user-role.guard';
-import { RefreshTokenGuard } from '../guards/refresh-token.guard';
-import { IAuth } from './dto/auth.interface';
-import { AuthId } from '../decorators/auth-id.decorator';
 
 @ApiTags('auth')
 @Controller('auth')

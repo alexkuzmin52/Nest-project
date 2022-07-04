@@ -24,7 +24,7 @@ export class User {
   email: string;
 
   @ApiProperty({ example: 'passWOrd123', description: 'password' })
-  @Prop({ required: true })
+  @Prop({ required: true, select: false })
   password: string;
 
   @ApiPropertyOptional({
@@ -39,13 +39,13 @@ export class User {
   @Prop({ default: null })
   age: number;
 
-  @ApiProperty({ example: 'alex@some.com', description: 'Email' })
+  @ApiProperty({ example: '0663334455', description: 'Phone' })
   @Prop({ required: true })
   phone: string;
 
   @ApiPropertyOptional({
-    example: '0663334455',
-    description: 'Phone',
+    example: 'user',
+    description: 'Status',
     enum: UserStatusEnum,
   })
   @Prop({ default: UserStatusEnum.PENDING })

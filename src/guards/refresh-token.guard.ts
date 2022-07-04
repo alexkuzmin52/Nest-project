@@ -14,15 +14,16 @@ import { ROLES_KEY } from '../decorators/user-role.decorator';
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwtService: JwtService,
-    private configService: ConfigService,
     private authService: AuthService,
+    private configService: ConfigService,
+    private jwtService: JwtService,
+    private reflector: Reflector,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const req = context.switchToHttp().getRequest();
       const token = req.headers.authorization;
+
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
       });

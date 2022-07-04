@@ -25,7 +25,7 @@ export class MailService {
 
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'change Password',
+      subject: 'Change password',
       template: 'forgot',
       context: {
         name: user.name,
@@ -35,15 +35,12 @@ export class MailService {
   }
 
   async sendTemporaryPassword(user: IUser, data: string): Promise<any> {
-    const url = `http://localhost:3000/auth/pass`;
-
     await this.mailerService.sendMail({
       to: user.email,
       subject: 'Temporary data',
       template: 'reset',
       context: {
         name: user.name,
-        url,
         pass: data,
       },
     });

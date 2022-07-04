@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MimeTypesEnum } from '../constants/mime-type.enum';
+
 import { AffiliationEnum } from '../constants/affiliation.enum';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
@@ -27,7 +28,6 @@ export class SetUserPhotoDto {
   @ApiPropertyOptional({ description: 'Attached object ID' })
   @IsOptional()
   @IsString()
-  // @IsNotEmpty()
   ownerId: string;
 
   @ApiPropertyOptional({ description: 'Array of filenames', default: null })

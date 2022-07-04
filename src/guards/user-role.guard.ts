@@ -14,10 +14,10 @@ import { ROLES_KEY } from '../decorators/user-role.decorator';
 @Injectable()
 export class UserRoleGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwtService: JwtService,
-    private configService: ConfigService,
     private authService: AuthService,
+    private configService: ConfigService,
+    private jwtService: JwtService,
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
