@@ -3,11 +3,10 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { RegisterUserDto } from '../user/dto';
+import { ChangeUserRoleDto, ChangeUserStatusDto, RegisterUserDto } from './dto';
 import { IUser } from '../user/dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
@@ -15,7 +14,7 @@ import { Model } from 'mongoose';
 
 import { ActionEnum } from '../../constants';
 import { AuthType } from './schemas/auth-schema';
-import { IAuth } from './dto';
+import { ChangeUserPasswordDto, IAuth } from './dto';
 import { LogService } from '../log/log.service';
 import { LoginDto } from './dto';
 import { MailService } from '../../../mail/mail.service';
@@ -136,10 +135,9 @@ export class AuthService {
 
     const tokensPair = await this.createTokensPair(userLogin);
 
-    //********************************************************************
-    const existAuthWithSameId = await this.deleteAuthByUserId({
-      userID: userLogin._id,
-    });
+    // const existAuthWithSameId = await this.deleteAuthByUserId({
+    //   userID: userLogin._id,
+    // });
 
     const newAuthModel = await new this.authModel({
       access_token: tokensPair.access_token,
@@ -260,8 +258,8 @@ export class AuthService {
     return validUser;
   }
 
-  async refreshUserTokens(authId: string): Promise<any> {
-    const refreshUser = await this.userService.getUserById(authId);
+  async refreshUserTokens(userId: string): Promise<any> {
+    const refreshUser = await this.userService.getUserById(userId);
 
     const tokensPair = (await this.createTokensPair(
       refreshUser,
@@ -278,7 +276,7 @@ export class AuthService {
 
     await this.logService.createLog({
       event: ActionEnum.USER_REFRESH_TOKEN,
-      userId: authId,
+      userId: userId,
     });
 
     return tokensPair;
@@ -302,7 +300,78 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
-  async deleteAuthByUserId(userID: Partial<IAuth>): Promise<object> {
-    return this.authModel.deleteOne(userID).exec();
+  async deleteAuthByUserId(userId: string): Promise<object> {
+    return this.authModel.findOneAndDelete({ userID: userId }).exec();
+  }
+
+  async changeUserPassword(
+    userId: string,
+    userPasswordDto: ChangeUserPasswordDto,
+  ): Promise<object> {
+    const hashedPassword = await bcrypt.hash(userPasswordDto.password, 10);
+
+    // await this.userService.changePassword(userId, hashedPassword);
+
+    const updatedUser = await this.userService.updateUserByParam(userId, {
+      status: UserStatusEnum.LOGGED_OUT,
+      password: hashedPassword,
+    });
+
+    await this.deleteAuthByUserId(userId);
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_CHANGE_PASSWORD,
+      userId: updatedUser._id,
+    });
+
+    // await this.refreshUserTokens(userId);
+
+    return {
+      message: `Passport successfully changed. Please login`,
+    };
+  }
+
+  async changeUserStatus(
+    authId: string,
+    userId: string,
+    userStatusDto: ChangeUserStatusDto,
+  ): Promise<object> {
+    const updatedUser = await this.userService.updateUserByParam(
+      userId,
+      userStatusDto,
+    );
+
+    await this.deleteAuthByUserId(userId);
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_CHANGE_STATUS,
+      userId: authId,
+    });
+    return {
+      message: `The administrator has changed the status of your account: ${updatedUser.status}.
+       Please contact Support`,
+    };
+  }
+
+  async changeUserRole(
+    authId: string,
+    userId: string,
+    userRoleDto: ChangeUserRoleDto,
+  ): Promise<object> {
+    const updatedUser = await this.userService.updateUserByParam(
+      userId,
+      userRoleDto,
+    );
+
+    await this.deleteAuthByUserId(userId);
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_CHANGE_ROLE,
+      userId: authId,
+    });
+    return {
+      message: `The administrator has changed the role of your account: ${updatedUser.role}.
+       Please login  or contact Support`,
+    };
   }
 }

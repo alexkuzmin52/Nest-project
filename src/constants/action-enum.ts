@@ -5,6 +5,7 @@ export enum ActionEnum {
   USER_UPDATE = 'user_update',
   USER_CHANGE_STATUS = 'user_change_ status',
   USER_CHANGE_ROLE = 'user_change_ role',
+  USER_CHANGE_PASSWORD = 'user_change_ password',
   USER_DELETED = 'user_deleted',
   USER_REGISTERED = 'user_registered',
   USER_CONFIRMED = 'user_confirmed',

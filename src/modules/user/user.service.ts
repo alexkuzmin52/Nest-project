@@ -1,4 +1,3 @@
-import * as bcrypt from 'bcrypt';
 import * as fs from 'fs-extra';
 import {
   BadRequestException,
@@ -12,13 +11,9 @@ import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 
 import { ActionEnum } from '../../constants';
-import { ChangeUserPasswordDto } from './dto';
-import { ChangeUserRoleDto } from './dto';
-import { ChangeUserStatusDto } from './dto';
-import { RegisterUserDto } from './dto';
+import { RegisterUserDto, UpdateUserDto } from './dto';
 import { IUser } from './dto';
 import { LogService } from '../log/log.service';
-import { UpdateUserDto } from './dto';
 import { User, UserType } from './schemas/user-schema';
 import { UserFilterDto } from './dto';
 import { UserFilterQueryDto } from './dto';
@@ -74,49 +69,49 @@ export class UserService {
 
     return updatedUser;
   }
-  async updateRoleByUserId(
-    userID: string,
-    property: ChangeUserRoleDto,
-    authId: string,
-  ): Promise<IUser> {
-    const updatedUser = await this.userModel
-      .findByIdAndUpdate(userID, property, { new: true })
-      .exec();
+  // async updateRoleByUserId(
+  //   userID: string,
+  //   property: ChangeUserRoleDto,
+  //   authId: string,
+  // ): Promise<IUser> {
+  //   const updatedUser = await this.userModel
+  //     .findByIdAndUpdate(userID, property, { new: true })
+  //     .exec();
+  //
+  //   if (!updatedUser) {
+  //     throw new NotFoundException('user not found');
+  //   }
+  //
+  //   await this.logService.createLog({
+  //     event: ActionEnum.USER_CHANGE_ROLE,
+  //     userId: authId,
+  //     data: { user: updatedUser._id, role: updatedUser.role },
+  //   });
+  //
+  //   return updatedUser;
+  // }
 
-    if (!updatedUser) {
-      throw new NotFoundException('user not found');
-    }
-
-    await this.logService.createLog({
-      event: ActionEnum.USER_CHANGE_ROLE,
-      userId: authId,
-      data: { user: updatedUser._id, role: updatedUser.role },
-    });
-
-    return updatedUser;
-  }
-
-  async updateStatusByUserId(
-    userID: string,
-    property: ChangeUserStatusDto,
-    authId: string,
-  ): Promise<IUser> {
-    const updatedUser = await this.userModel
-      .findByIdAndUpdate(userID, property, { new: true })
-      .exec();
-
-    if (!updatedUser) {
-      throw new NotFoundException('user not found');
-    }
-
-    await this.logService.createLog({
-      event: ActionEnum.USER_CHANGE_STATUS,
-      userId: authId,
-      data: { user: updatedUser._id, status: updatedUser.status },
-    });
-
-    return updatedUser;
-  }
+  // async updateStatusByUserId(
+  //   userID: string,
+  //   property: ChangeUserStatusDto,
+  //   authId: string,
+  // ): Promise<IUser> {
+  //   const updatedUser = await this.userModel
+  //     .findByIdAndUpdate(userID, property, { new: true })
+  //     .exec();
+  //
+  //   if (!updatedUser) {
+  //     throw new NotFoundException('user not found');
+  //   }
+  //
+  //   await this.logService.createLog({
+  //     event: ActionEnum.USER_CHANGE_STATUS,
+  //     userId: authId,
+  //     data: { user: updatedUser._id, status: updatedUser.status },
+  //   });
+  //
+  //   return updatedUser;
+  // }
 
   async removeUserById(id: string, authId: string): Promise<IUser> {
     const deletedUser = await this.userModel
@@ -199,28 +194,16 @@ export class UserService {
     return userLoginByEmail;
   }
 
-  async changePassword(
-    token: string,
-    changeUserPasswordDto: ChangeUserPasswordDto,
-  ): Promise<object> {
-    const payload = this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
-    });
-
-    const hashedPassword = await bcrypt.hash(
-      changeUserPasswordDto.password,
-      10,
-    );
-
-    await this.userModel
-      .updateOne(
-        { _id: payload.id },
-        { password: hashedPassword },
-        { new: true },
-      )
-      .exec();
-    return { message: 'Passport successfully changed' };
-  }
+  // async changePassword(userID: string, hashedPassword: string): Promise<IUser> {
+  //   const updatedUser = await this.userModel
+  //     .findByIdAndUpdate(userID, { password: hashedPassword }, { new: true })
+  //     .exec();
+  //
+  //   if (!updatedUser) {
+  //     throw new NotFoundException('user not found');
+  //   }
+  //   return updatedUser;
+  // }
 
   async getUsersByFilter(query: UserFilterQueryDto): Promise<IUser[]> {
     const {

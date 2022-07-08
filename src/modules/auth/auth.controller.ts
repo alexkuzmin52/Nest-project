@@ -12,8 +12,13 @@ import {
 } from '@nestjs/common';
 
 import { AuthId } from '../../decorators';
-import { RegisterUserDto } from '../user/dto';
-import { IAuth } from './dto';
+import { RegisterUserDto } from './dto';
+import {
+  ChangeUserPasswordDto,
+  ChangeUserRoleDto,
+  ChangeUserStatusDto,
+  IAuth,
+} from './dto';
 import { LoginDto } from './dto';
 import { RefreshTokenGuard } from '../../guards';
 import { UserRole } from '../../decorators';
@@ -44,8 +49,8 @@ export class AuthController {
   @UserRole(UserRoleEnum.USER, UserRoleEnum.ADMIN)
   @UseGuards(RefreshTokenGuard)
   @Get('refresh')
-  refresh(@AuthId() authid: string): Promise<object> {
-    return this.authService.refreshUserTokens(authid);
+  async refresh(@AuthId() authid: string): Promise<object> {
+    return await this.authService.refreshUserTokens(authid);
   }
 
   @ApiOperation({ summary: 'User login' })
@@ -80,5 +85,43 @@ export class AuthController {
   @Get('reset/:token')
   async reset(@Param('token') token: string): Promise<object> {
     return await this.authService.resetPassword(token);
+  }
+
+  @ApiOperation({ summary: 'User change password' })
+  @ApiResponse({ status: 200, type: Object })
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @UseGuards(UserRoleGuard)
+  @Put('pass')
+  async changePassword(
+    @AuthId() userId: string,
+    @Body() userPasswordDto: ChangeUserPasswordDto,
+  ): Promise<object> {
+    return await this.authService.changeUserPassword(userId, userPasswordDto);
+  }
+
+  @ApiOperation({ summary: 'User change status' })
+  @ApiResponse({ status: 200, type: Object })
+  @UserRole(UserRoleEnum.ADMIN)
+  @UseGuards(UserRoleGuard)
+  @Put('status/:id')
+  async changeStatus(
+    @AuthId() authId: string,
+    @Param('id') id: string,
+    @Body() userStatusDto: ChangeUserStatusDto,
+  ): Promise<object> {
+    return await this.authService.changeUserStatus(authId, id, userStatusDto);
+  }
+
+  @ApiOperation({ summary: 'User change role' })
+  @ApiResponse({ status: 200, type: Object })
+  @UserRole(UserRoleEnum.ADMIN)
+  @UseGuards(UserRoleGuard)
+  @Put('role/:id')
+  async changeRole(
+    @AuthId() authId: string,
+    @Param('id') userId: string,
+    @Body() userRoleDto: ChangeUserRoleDto,
+  ): Promise<object> {
+    return await this.authService.changeUserRole(authId, userId, userRoleDto);
   }
 }
