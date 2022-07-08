@@ -2,10 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { IUser } from '../dto/user.interface';
-import { UserRoleEnum } from '../../../constants/user-role-enum';
-import { UserStatusEnum } from '../../../constants/user-status-enum';
-import { UserGenderEnum } from '../../../constants/user-gender-enum';
+import { IUser } from '../dto';
+import { UserRoleEnum } from '../../../constants';
+import { UserStatusEnum } from '../../../constants';
+import { UserGenderEnum } from '../../../constants';
 
 export type UserType = IUser & Document;
 

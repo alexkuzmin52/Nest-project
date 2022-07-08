@@ -2,7 +2,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 
-import { IFile } from './dto/file.interface';
+import { IFile } from './dto';
 import { PhotoType } from './schemas/photo-schema';
 
 @Injectable()

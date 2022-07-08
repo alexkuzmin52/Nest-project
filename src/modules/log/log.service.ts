@@ -1,4 +1,4 @@
-import { ILog } from './dto/log.interface';
+import { ILog } from './dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 import { Log, LogType } from './schemas/log-schema';

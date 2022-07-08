@@ -2,9 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { AffiliationEnum } from '../../../constants/affiliation.enum';
-import { IFile } from '../dto/file.interface';
-import { MimeTypesEnum } from '../../../constants/mime-type.enum';
+import { AffiliationEnum } from '../../../constants';
+import { IFile } from '../dto';
+import { MimeTypesEnum } from '../../../constants';
 
 export type PhotoType = IFile & Document;
 

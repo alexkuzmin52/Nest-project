@@ -1,25 +1,26 @@
 import * as bcrypt from 'bcrypt';
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDto } from '../user/dto/create-user.dto';
-import { IUser } from '../user/dto/user.interface';
+import { RegisterUserDto } from '../user/dto';
+import { IUser } from '../user/dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 
-import { ActionEnum } from '../log/constants/action-enum';
+import { ActionEnum } from '../../constants';
 import { AuthType } from './schemas/auth-schema';
-import { IAuth } from './dto/auth.interface';
+import { IAuth } from './dto';
 import { LogService } from '../log/log.service';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto } from './dto';
 import { MailService } from '../../../mail/mail.service';
 import { UserService } from '../user/user.service';
-import { UserStatusEnum } from '../../constants/user-status-enum';
+import { UserStatusEnum } from '../../constants';
 import { generateRandomPassword } from './helpers/generate-random-password';
 
 @Injectable()
@@ -33,14 +34,14 @@ export class AuthService {
     @InjectModel('auth') private authModel: Model<AuthType>,
   ) {}
 
-  async registerUser(createUserDto: CreateUserDto): Promise<object> {
+  async registerUser(registerUserDto: RegisterUserDto): Promise<object> {
     await this.userService.findUserByEmail({
-      email: createUserDto.email,
+      email: registerUserDto.email,
     });
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser = await this.userService.createUser({
-      ...createUserDto,
+    const hashedPassword = await bcrypt.hash(registerUserDto.password, 10);
+    const newUser = await this.userService.registerUser({
+      ...registerUserDto,
       password: hashedPassword,
     });
 
@@ -50,7 +51,16 @@ export class AuthService {
       token: confirmToken,
     });
 
-    await this.mailService.sendUserConfirm(newUser, confirmToken);
+    try {
+      await this.mailService.sendUserConfirm(newUser, confirmToken);
+    } catch (e) {
+      await this.userService.removeUserByEmail({
+        email: newUser.email,
+      });
+      throw new BadRequestException(
+        `Registration rejected: an error occurred while sending the email: ${newUser.email}`,
+      );
+    }
 
     await this.logService.createLog({
       event: ActionEnum.USER_REGISTER,
@@ -78,32 +88,28 @@ export class AuthService {
   }
 
   async confirmUser(confirmToken: string): Promise<object> {
-    try {
-      const payload = await this.jwtService.verify(confirmToken, {
-        secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
-      });
+    const payload = await this.jwtService.verify(confirmToken, {
+      secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
+    });
 
-      await this.userService.findUserByParam({
-        token: confirmToken,
-      });
+    await this.userService.findUserByParam({
+      token: confirmToken,
+    });
 
-      const confirmedUser = await this.userService.updateUserByParam(
-        payload['id'],
-        {
-          status: UserStatusEnum.CONFIRMED,
-          token: null,
-        },
-      );
+    const confirmedUser = await this.userService.updateUserByParam(
+      payload['id'],
+      {
+        status: UserStatusEnum.CONFIRMED,
+        token: null,
+      },
+    );
 
-      await this.logService.createLog({
-        event: ActionEnum.USER_CONFIRMED,
-        userId: confirmedUser._id,
-      });
+    await this.logService.createLog({
+      event: ActionEnum.USER_CONFIRMED,
+      userId: confirmedUser._id,
+    });
 
-      return { message: 'Registration successfully confirmed. Please login' };
-    } catch (e) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    return { message: 'Registration successfully confirmed. Please login' };
   }
 
   async loginUser(loginDto: LoginDto): Promise<Partial<IAuth>> {
@@ -116,11 +122,24 @@ export class AuthService {
       userLogin.password,
     );
 
-    if (userLogin.status !== UserStatusEnum.CONFIRMED || !isValidPassword) {
+    if (
+      (userLogin.status !== UserStatusEnum.LOGGED_OUT &&
+        userLogin.status !== UserStatusEnum.CONFIRMED) ||
+      !isValidPassword
+    ) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    await this.userService.updateUserByParam(userLogin._id, {
+      status: UserStatusEnum.LOGGED_IN,
+    });
+
     const tokensPair = await this.createTokensPair(userLogin);
+
+    //********************************************************************
+    const existAuthWithSameId = await this.deleteAuthByUserId({
+      userID: userLogin._id,
+    });
 
     const newAuthModel = await new this.authModel({
       access_token: tokensPair.access_token,
@@ -130,9 +149,6 @@ export class AuthService {
 
     await newAuthModel.save();
 
-    await this.userService.updateUserByParam(userLogin._id, {
-      status: UserStatusEnum.ACTIVE,
-    });
     await this.logService.createLog({
       event: ActionEnum.USER_LOGIN,
       userId: userLogin._id,
@@ -161,13 +177,8 @@ export class AuthService {
   }
 
   async logoutUser(authId: string): Promise<any> {
-    const deletedAuth = this.authModel.deleteOne({ userID: authId });
-    if (!deletedAuth) {
-      throw new NotFoundException('user for delete not found');
-    }
-
     await this.userService.updateUserByParam(authId, {
-      status: UserStatusEnum.CONFIRMED,
+      status: UserStatusEnum.LOGGED_OUT,
     });
 
     await this.logService.createLog({
@@ -175,7 +186,7 @@ export class AuthService {
       userId: authId,
     });
 
-    return deletedAuth;
+    return { message: 'please login' };
   }
 
   async forgotPassword(token: string): Promise<object> {
@@ -205,7 +216,7 @@ export class AuthService {
     await this.mailService.sendUserForgot(userForgot, forgotToken);
 
     return {
-      link: `http://localhost:3000/auth/reset/${forgotToken}`,
+      link: `${forgotToken}`,
     };
   }
 
@@ -213,12 +224,9 @@ export class AuthService {
     const payload = this.jwtService.verify(token, {
       secret: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_SECRET'),
     });
-
     const changingPasswordUser = await this.userService.getUserById(payload.id);
-
     const newPassword = generateRandomPassword(6);
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
-
     const updatedUser = await this.userService.updateUserByParam(
       changingPasswordUser._id,
       { token: null, password: newHashedPassword },
@@ -234,13 +242,12 @@ export class AuthService {
     });
 
     return {
-      message: 'Information with a new passport has been sent to your mail',
+      message: `Information with a new passport has been sent to your mail ${newPassword}`,
     };
   }
 
   async checkIsValidUser(id: string): Promise<IUser> {
     const validUser = await this.userService.getUserById(id);
-
     if (!validUser) {
       throw new ForbiddenException('User not found');
     }
@@ -260,8 +267,7 @@ export class AuthService {
       refreshUser,
     )) as Partial<IAuth>;
 
-    await this.authModel.deleteOne({ userID: refreshUser });
-
+    await this.authModel.deleteOne({ userID: refreshUser._id });
     const newAuthModel = await new this.authModel({
       access_token: tokensPair.access_token,
       refresh_token: tokensPair.refresh_token,
@@ -294,5 +300,9 @@ export class AuthService {
       expiresIn: this.configService.get('JWT_REFRESH_TOKEN_SECRET_LIFETIME'),
     });
     return { access_token, refresh_token };
+  }
+
+  async deleteAuthByUserId(userID: Partial<IAuth>): Promise<object> {
+    return this.authModel.deleteOne(userID).exec();
   }
 }

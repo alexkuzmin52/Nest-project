@@ -2,7 +2,7 @@ import * as mongoose from 'mongoose';
 import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { IAuth } from '../dto/auth.interface';
+import { IAuth } from '../dto';
 import { User } from '../../user/schemas/user-schema';
 
 export type AuthType = IAuth & Document;

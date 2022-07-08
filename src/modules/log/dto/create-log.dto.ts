@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
-import { ActionEnum } from '../constants/action-enum';
+import { ActionEnum } from '../../../constants';
 import { ApiProperty } from '@nestjs/swagger';
 //TODO delete?
 export class CreateLogDto {

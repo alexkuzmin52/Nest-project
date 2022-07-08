@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MimeTypesEnum } from '../../../constants/mime-type.enum';
+import { MimeTypesEnum } from '../../../constants';
 
-import { AffiliationEnum } from '../../../constants/affiliation.enum';
+import { AffiliationEnum } from '../../../constants';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class SetUserPhotoDto {

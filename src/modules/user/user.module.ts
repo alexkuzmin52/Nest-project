@@ -7,9 +7,11 @@ import { LogModule } from '../log/log.module';
 import { User, userSchema } from './schemas/user-schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
+    JwtModule.register({}),
     FileModule,
     LogModule,
     MongooseModule.forFeature([{ name: User.name, schema: userSchema }]),

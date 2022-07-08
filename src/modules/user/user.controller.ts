@@ -18,26 +18,27 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { AuthId } from '../../decorators/auth-id.decorator';
-import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
-import { ChangeUserRoleDto } from './dto/change-user-role.dto';
-import { ChangeUserStatusDto } from './dto/change-user-status.dto';
-import { IUser } from './dto/user.interface';
-import { SetUserPhotoDto } from './dto/set-user-photo.dto';
-import { SingleFile } from '../../decorators/single-file.decorator';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthId } from '../../decorators';
+import { ChangeUserPasswordDto } from './dto';
+import { ChangeUserRoleDto } from './dto';
+import { ChangeUserStatusDto } from './dto';
+import { IUser } from './dto';
+import { SetUserPhotoDto } from './dto';
+import { SingleFile } from '../../decorators';
+import { UpdateUserDto } from './dto';
 import { User } from './schemas/user-schema';
-import { UserFilterQueryDto } from './dto/user-filter-query.dto';
-import { UserRole } from '../../decorators/user-role.decorator';
-import { UserRoleEnum } from '../../constants/user-role-enum';
-import { UserRoleGuard } from '../../guards/user-role.guard';
+import { UserFilterQueryDto } from './dto';
+import { UserRole } from '../../decorators';
+import { UserRoleEnum } from '../../constants';
+import { UserRoleGuard } from '../../guards';
 import { UserService } from './user.service';
 import { ValidatorMongoIdPipe } from '../../pipes/validator-mongo-id.pipe';
+import { UserStatusGuard } from '../../guards/user-status.guard';
 
 @ApiTags('Users CRUD')
 @UserRole(UserRoleEnum.ADMIN)
 @Controller('users')
-@UseGuards(UserRoleGuard)
+@UseGuards(UserRoleGuard, UserStatusGuard)
 export class UserController {
   constructor(private userService: UserService) {}
 
@@ -45,9 +46,8 @@ export class UserController {
   @ApiResponse({ status: 200, type: [User] })
   @Get('')
   @ApiSecurity('access-key')
-  getAllUsers(): Promise<IUser[]> {
-    const users = this.userService.getUsers();
-    return users;
+  async getAllUsers(): Promise<IUser[]> {
+    return await this.userService.getUsers();
   }
 
   @ApiOperation({ summary: 'Get user by userId' })

@@ -1,4 +1,5 @@
 import {
+  IsAlphanumeric,
   IsEmail,
   IsEnum,
   IsInt,
@@ -14,10 +15,10 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { RegexEnum } from '../../../constants/regex-enum';
-import { UserGenderEnum } from '../../../constants/user-gender-enum';
+import { RegexEnum } from '../../../constants';
+import { UserGenderEnum } from '../../../constants';
 
-export class CreateUserDto {
+export class RegisterUserDto {
   @ApiProperty({
     type: String,
     minLength: 2,
@@ -39,6 +40,7 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @IsString()
+  @IsAlphanumeric()
   @Length(2, 20)
   surname: string;
 

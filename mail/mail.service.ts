@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 
-import { IUser } from '../src/modules/user/dto/user.interface';
+import { IUser } from '../src/modules/user/dto';
+import { join } from 'path';
 
 @Injectable()
 export class MailService {
   constructor(private mailerService: MailerService) {}
-  async sendUserConfirm(user: IUser, token: string) {
+  async sendUserConfirm(user: IUser, token: string): Promise<any> {
     const url = `http://localhost:3000/auth/confirm/${token}`;
 
     await this.mailerService.sendMail({
@@ -35,13 +36,14 @@ export class MailService {
   }
 
   async sendTemporaryPassword(user: IUser, data: string): Promise<any> {
+    const pass = data;
     await this.mailerService.sendMail({
       to: user.email,
       subject: 'Temporary data',
       template: 'reset',
       context: {
         name: user.name,
-        pass: data,
+        pass,
       },
     });
   }

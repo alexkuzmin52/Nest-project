@@ -11,21 +11,21 @@ import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 
-import { ActionEnum } from '../log/constants/action-enum';
-import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
-import { ChangeUserRoleDto } from './dto/change-user-role.dto';
-import { ChangeUserStatusDto } from './dto/change-user-status.dto';
-import { CreateUserDto } from './dto/create-user.dto';
-import { IUser } from './dto/user.interface';
+import { ActionEnum } from '../../constants';
+import { ChangeUserPasswordDto } from './dto';
+import { ChangeUserRoleDto } from './dto';
+import { ChangeUserStatusDto } from './dto';
+import { RegisterUserDto } from './dto';
+import { IUser } from './dto';
 import { LogService } from '../log/log.service';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto } from './dto';
 import { User, UserType } from './schemas/user-schema';
-import { UserFilterDto } from './dto/user-filter.dto';
-import { UserFilterQueryDto } from './dto/user-filter-query.dto';
-import { UserStatusEnum } from '../../constants/user-status-enum';
-import { SetUserPhotoDto } from './dto/set-user-photo.dto';
+import { UserFilterDto } from './dto';
+import { UserFilterQueryDto } from './dto';
+import { UserStatusEnum } from '../../constants';
+import { SetUserPhotoDto } from './dto';
 import { FileService } from '../file/file.service';
-import { IFile } from '../file/dto/file.interface';
+import { IFile } from '../file/dto';
 
 @Injectable()
 export class UserService {
@@ -38,20 +38,18 @@ export class UserService {
   ) {}
 
   async getUsers(): Promise<IUser[]> {
-    return await this.userModel.find({}, { password: 0 }).exec();
+    return await this.userModel.find().exec();
   }
 
   async getUserById(userID: string): Promise<IUser> {
-    const userById = await this.userModel
-      .findById(userID, { password: 0 })
-      .exec();
+    const userById = await this.userModel.findById(userID).exec();
     if (!userById) {
       throw new NotFoundException('user not found');
     }
     return userById;
   }
 
-  async createUser(userDto: CreateUserDto): Promise<IUser> {
+  async registerUser(userDto: RegisterUserDto): Promise<IUser> {
     const newUser = new this.userModel(userDto);
     return await newUser.save();
   }
@@ -62,7 +60,6 @@ export class UserService {
   ): Promise<IUser> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(authId, property, { new: true })
-      .select(['-password'])
       .exec();
 
     if (!updatedUser) {
@@ -84,7 +81,6 @@ export class UserService {
   ): Promise<IUser> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, property, { new: true })
-      .select(['-password'])
       .exec();
 
     if (!updatedUser) {
@@ -107,7 +103,6 @@ export class UserService {
   ): Promise<IUser> {
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, property, { new: true })
-      .select(['-password'])
       .exec();
 
     if (!updatedUser) {
@@ -141,13 +136,26 @@ export class UserService {
     return deletedUser;
   }
 
+  async removeUserByEmail(email: Partial<IUser>): Promise<object> {
+    const deletedUser = await this.userModel
+      .deleteOne(email)
+      .select(['-password'])
+      .exec();
+
+    if (!deletedUser) {
+      throw new NotFoundException('Remote user was not found');
+    }
+    return deletedUser;
+  }
+
   async updateUserByParam(
     userID: string,
     param: Partial<IUser>,
   ): Promise<IUser> {
+    console.log('5555555555555555555555555555555555');
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, param, { new: true })
-      .select(['-password'])
+      .select(['+password'])
       .exec();
     if (!updatedUser) {
       throw new NotFoundException('user not found');
@@ -164,21 +172,25 @@ export class UserService {
     ) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return userByConfirmToken; //TODO might void type instead IUser
+    return userByConfirmToken;
   }
 
   async findUserByEmail(email: Partial<IUser>): Promise<IUser> {
-    const userByEmail = await this.userModel.findOne(email).exec();
+    const userWithSameEmail = await this.userModel.findOne(email).exec();
 
-    if (userByEmail) {
+    if (userWithSameEmail) {
       throw new BadRequestException(
-        `User with this e-mail ${userByEmail.email} is already registered`,
+        `User with this e-mail ${userWithSameEmail.email} is already registered. Please login`,
       );
     }
-    return userByEmail; //TODO might void type instead IUser
+    return userWithSameEmail;
   }
+
   async findUserLoginByEmail(email: Partial<IUser>): Promise<IUser> {
-    const userLoginByEmail = await this.userModel.findOne(email).exec();
+    const userLoginByEmail = await this.userModel
+      .findOne(email)
+      .select('+password')
+      .exec();
 
     if (!userLoginByEmail) {
       throw new UnauthorizedException('Invalid credentials');

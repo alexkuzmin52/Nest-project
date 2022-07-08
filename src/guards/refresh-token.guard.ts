@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 
 import { AuthService } from '../modules/auth/auth.service';
-import { ROLES_KEY } from '../decorators/user-role.decorator';
+import { ROLES_KEY } from '../decorators';
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
