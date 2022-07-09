@@ -3,11 +3,11 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
 import { FileModule } from '../file/file.module';
+import { JwtModule } from '@nestjs/jwt';
 import { LogModule } from '../log/log.module';
 import { User, userSchema } from './schemas/user-schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [

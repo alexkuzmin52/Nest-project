@@ -11,16 +11,16 @@ import { JwtService } from '@nestjs/jwt';
 import { Model } from 'mongoose';
 
 import { ActionEnum } from '../../constants';
-import { RegisterUserDto, UpdateUserDto } from './dto';
+import { FileService } from '../file/file.service';
+import { IFile } from '../file/dto';
 import { IUser } from './dto';
 import { LogService } from '../log/log.service';
+import { RegisterUserDto, UpdateUserDto } from './dto';
+import { SetUserPhotoDto } from './dto';
 import { User, UserType } from './schemas/user-schema';
 import { UserFilterDto } from './dto';
 import { UserFilterQueryDto } from './dto';
 import { UserStatusEnum } from '../../constants';
-import { SetUserPhotoDto } from './dto';
-import { FileService } from '../file/file.service';
-import { IFile } from '../file/dto';
 
 @Injectable()
 export class UserService {
@@ -69,49 +69,6 @@ export class UserService {
 
     return updatedUser;
   }
-  // async updateRoleByUserId(
-  //   userID: string,
-  //   property: ChangeUserRoleDto,
-  //   authId: string,
-  // ): Promise<IUser> {
-  //   const updatedUser = await this.userModel
-  //     .findByIdAndUpdate(userID, property, { new: true })
-  //     .exec();
-  //
-  //   if (!updatedUser) {
-  //     throw new NotFoundException('user not found');
-  //   }
-  //
-  //   await this.logService.createLog({
-  //     event: ActionEnum.USER_CHANGE_ROLE,
-  //     userId: authId,
-  //     data: { user: updatedUser._id, role: updatedUser.role },
-  //   });
-  //
-  //   return updatedUser;
-  // }
-
-  // async updateStatusByUserId(
-  //   userID: string,
-  //   property: ChangeUserStatusDto,
-  //   authId: string,
-  // ): Promise<IUser> {
-  //   const updatedUser = await this.userModel
-  //     .findByIdAndUpdate(userID, property, { new: true })
-  //     .exec();
-  //
-  //   if (!updatedUser) {
-  //     throw new NotFoundException('user not found');
-  //   }
-  //
-  //   await this.logService.createLog({
-  //     event: ActionEnum.USER_CHANGE_STATUS,
-  //     userId: authId,
-  //     data: { user: updatedUser._id, status: updatedUser.status },
-  //   });
-  //
-  //   return updatedUser;
-  // }
 
   async removeUserById(id: string, authId: string): Promise<IUser> {
     const deletedUser = await this.userModel
@@ -147,7 +104,6 @@ export class UserService {
     userID: string,
     param: Partial<IUser>,
   ): Promise<IUser> {
-    console.log('5555555555555555555555555555555555');
     const updatedUser = await this.userModel
       .findByIdAndUpdate(userID, param, { new: true })
       .select(['+password'])
@@ -193,17 +149,6 @@ export class UserService {
 
     return userLoginByEmail;
   }
-
-  // async changePassword(userID: string, hashedPassword: string): Promise<IUser> {
-  //   const updatedUser = await this.userModel
-  //     .findByIdAndUpdate(userID, { password: hashedPassword }, { new: true })
-  //     .exec();
-  //
-  //   if (!updatedUser) {
-  //     throw new NotFoundException('user not found');
-  //   }
-  //   return updatedUser;
-  // }
 
   async getUsersByFilter(query: UserFilterQueryDto): Promise<IUser[]> {
     const {

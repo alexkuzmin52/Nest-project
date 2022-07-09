@@ -29,7 +29,7 @@ import { UserRoleEnum } from '../../constants';
 import { UserRoleGuard } from '../../guards';
 import { UserService } from './user.service';
 import { ValidatorMongoIdPipe } from '../../pipes/validator-mongo-id.pipe';
-import { UserStatusGuard } from '../../guards/user-status.guard';
+import { UserStatusGuard } from '../../guards';
 
 @ApiTags('Users CRUD')
 @UserRole(UserRoleEnum.ADMIN)
@@ -65,45 +65,6 @@ export class UserController {
   ): Promise<IUser> {
     return this.userService.updateUserByProperty(authId, param);
   }
-
-  // @ApiOperation({ summary: 'Change role of user by userId' })
-  // @ApiResponse({ status: 200, type: User })
-  // @Put('role/:id')
-  // @ApiSecurity('access-key')
-  // changeUserRole(
-  //   @AuthId() authId: string,
-  //   @Param('id', ValidatorMongoIdPipe) id: string,
-  //   @Body() param: ChangeUserRoleDto,
-  // ): Promise<IUser> {
-  //   return this.userService.updateRoleByUserId(id, param, authId);
-  // }
-
-  // @ApiOperation({ summary: 'Change status of user by userId' })
-  // @ApiResponse({ status: 200, type: User })
-  // @Put('status/:id')
-  // @ApiSecurity('access-key')
-  // changeUserStatus(
-  //   @AuthId() authId: string,
-  //   @Param('id', ValidatorMongoIdPipe) id: string,
-  //   @Body() param: ChangeUserStatusDto,
-  // ): Promise<IUser> {
-  //   return this.userService.updateStatusByUserId(id, param, authId);
-  // }
-
-  // @ApiOperation({ summary: 'Change password' })
-  // @ApiResponse({ status: 200 })
-  // @UserRole(UserRoleEnum.USER)
-  // @Put('pass')
-  // @ApiSecurity('access-key')
-  // changeUserPassword(
-  //   @Req() req,
-  //   @Body() changeUserPasswordDto: ChangeUserPasswordDto,
-  // ): Promise<object> {
-  //   return this.userService.changePassword(
-  //     req.headers.authorization,
-  //     changeUserPasswordDto,
-  //   );
-  // }
 
   @ApiOperation({ summary: 'Delete user by userId' })
   @ApiResponse({ status: 200, type: User })

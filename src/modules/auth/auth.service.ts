@@ -135,10 +135,6 @@ export class AuthService {
 
     const tokensPair = await this.createTokensPair(userLogin);
 
-    // const existAuthWithSameId = await this.deleteAuthByUserId({
-    //   userID: userLogin._id,
-    // });
-
     const newAuthModel = await new this.authModel({
       access_token: tokensPair.access_token,
       refresh_token: tokensPair.refresh_token,
@@ -246,6 +242,7 @@ export class AuthService {
 
   async checkIsValidUser(id: string): Promise<IUser> {
     const validUser = await this.userService.getUserById(id);
+
     if (!validUser) {
       throw new ForbiddenException('User not found');
     }
@@ -266,6 +263,7 @@ export class AuthService {
     )) as Partial<IAuth>;
 
     await this.authModel.deleteOne({ userID: refreshUser._id });
+
     const newAuthModel = await new this.authModel({
       access_token: tokensPair.access_token,
       refresh_token: tokensPair.refresh_token,
@@ -288,6 +286,7 @@ export class AuthService {
       id: user._id,
       role: user.role,
     };
+
     const access_token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       expiresIn: this.configService.get('JWT_ACCESS_TOKEN_SECRET_LIFETIME'),
@@ -310,8 +309,6 @@ export class AuthService {
   ): Promise<object> {
     const hashedPassword = await bcrypt.hash(userPasswordDto.password, 10);
 
-    // await this.userService.changePassword(userId, hashedPassword);
-
     const updatedUser = await this.userService.updateUserByParam(userId, {
       status: UserStatusEnum.LOGGED_OUT,
       password: hashedPassword,
@@ -323,8 +320,6 @@ export class AuthService {
       event: ActionEnum.USER_CHANGE_PASSWORD,
       userId: updatedUser._id,
     });
-
-    // await this.refreshUserTokens(userId);
 
     return {
       message: `Passport successfully changed. Please login`,
@@ -347,6 +342,7 @@ export class AuthService {
       event: ActionEnum.USER_CHANGE_STATUS,
       userId: authId,
     });
+
     return {
       message: `The administrator has changed the status of your account: ${updatedUser.status}.
        Please contact Support`,
@@ -358,10 +354,10 @@ export class AuthService {
     userId: string,
     userRoleDto: ChangeUserRoleDto,
   ): Promise<object> {
-    const updatedUser = await this.userService.updateUserByParam(
-      userId,
-      userRoleDto,
-    );
+    const updatedUser = await this.userService.updateUserByParam(userId, {
+      role: userRoleDto.role,
+      status: UserStatusEnum.LOGGED_OUT,
+    });
 
     await this.deleteAuthByUserId(userId);
 
@@ -369,6 +365,7 @@ export class AuthService {
       event: ActionEnum.USER_CHANGE_ROLE,
       userId: authId,
     });
+
     return {
       message: `The administrator has changed the role of your account: ${updatedUser.role}.
        Please login  or contact Support`,

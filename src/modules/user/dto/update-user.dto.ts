@@ -24,6 +24,7 @@ export class UpdateUserDto {
   @IsString()
   @Length(2, 20)
   name: string;
+
   @ApiPropertyOptional({
     example: 'Kuzmin',
     description: 'The surname of the User',
@@ -33,18 +34,21 @@ export class UpdateUserDto {
   @IsString()
   @Length(2, 20)
   surname: string;
+
   @ApiPropertyOptional({ example: 33, description: 'Age' })
   @IsOptional()
   @IsInt()
   @Min(5)
   @Max(115)
   age: number;
+
   @ApiPropertyOptional({ example: '0663334455', description: 'Phone' })
   @IsOptional()
   @IsNotEmpty()
   @IsString()
   @Matches(RegexEnum.phone)
   phone: string;
+
   @ApiPropertyOptional({ example: 'male', enum: ['male', 'female'] })
   @IsOptional()
   @IsEnum(UserGenderEnum)
