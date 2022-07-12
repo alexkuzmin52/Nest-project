@@ -31,7 +31,7 @@ import { UserService } from './user.service';
 import { ValidatorMongoIdPipe } from '../../pipes/validator-mongo-id.pipe';
 import { UserStatusGuard } from '../../guards';
 
-@ApiTags('Users CRUD')
+@ApiTags('Users')
 @UserRole(UserRoleEnum.ADMIN)
 @Controller('users')
 @UseGuards(UserRoleGuard, UserStatusGuard)

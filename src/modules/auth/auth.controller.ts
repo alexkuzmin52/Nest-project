@@ -25,7 +25,7 @@ import { UserRole } from '../../decorators';
 import { UserRoleEnum } from '../../constants';
 import { UserRoleGuard } from '../../guards';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}

@@ -8,6 +8,7 @@ import { LogModule } from './modules/log/log.module';
 import { MailModule } from '../mail/mail.module';
 import { UserModule } from './modules/user/user.module';
 import { configuration } from '../config/configuration';
+import { CategoryModule } from './modules/category/category.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { configuration } from '../config/configuration';
       envFilePath: `config/env/.${process.env.NODE_ENV}.env`,
       load: [configuration],
     }),
+    CategoryModule,
     FileModule,
     LogModule,
     MailModule,
