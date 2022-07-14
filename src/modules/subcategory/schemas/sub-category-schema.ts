@@ -2,12 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Document, SchemaTypes } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { ICategory } from '../dto';
+import { ISubCategory } from '../dto';
 
-export type CategoryType = ICategory & Document;
+export type SubCategoryType = ISubCategory & Document;
 
 @Schema({ timestamps: true })
-export class Category {
+export class SubCategory {
   @ApiProperty({ description: 'Reserve', example: null })
   @Prop({ type: String, default: null })
   code: '';
@@ -47,4 +47,4 @@ export class Category {
   @Prop({ default: null })
   logo: string;
 }
-export const CategorySchema = SchemaFactory.createForClass(Category);
+export const SubCategorySchema = SchemaFactory.createForClass(SubCategory);

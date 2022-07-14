@@ -24,7 +24,6 @@ export class UserRoleGuard implements CanActivate {
     try {
       const req = context.switchToHttp().getRequest();
       const token = req.headers.authorization;
-
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
       });
@@ -39,6 +38,7 @@ export class UserRoleGuard implements CanActivate {
       if (!requiredRole) {
         return true;
       }
+
       return requiredRole.includes(payload['role']);
     } catch (e) {
       throw new ForbiddenException(`No access: ${e.message}`);

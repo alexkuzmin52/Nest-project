@@ -9,6 +9,7 @@ import { MailModule } from '../mail/mail.module';
 import { UserModule } from './modules/user/user.module';
 import { configuration } from '../config/configuration';
 import { CategoryModule } from './modules/category/category.module';
+import { SubCategoryModule } from './modules/subcategory/sub-category.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CategoryModule } from './modules/category/category.module';
       load: [configuration],
     }),
     CategoryModule,
+    SubCategoryModule,
     FileModule,
     LogModule,
     MailModule,

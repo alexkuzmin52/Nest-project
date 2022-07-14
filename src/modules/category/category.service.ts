@@ -1,17 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { AddSubCategoryDto } from './dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { Category, CategoryType } from './schemas/category-schema';
+import { CreateCategoryDto } from './dto';
+import { ICategory } from './dto';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ICategory } from './dto/category.interface';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { ConfigService } from '@nestjs/config';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { SubCategoryService } from '../subcategory/subcategory.service';
+import { UpdateCategoryDto } from './dto';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryType>,
-    private configService: ConfigService,
+    private subcategoryService: SubCategoryService,
   ) {}
 
   async getAllCategories(): Promise<ICategory[]> {
@@ -21,6 +27,18 @@ export class CategoryService {
   async createCategory(
     createCategoryDto: CreateCategoryDto,
   ): Promise<ICategory> {
+    const isExistCategoryWithSameTittle = await this.categoryModel
+      .findOne({
+        title: createCategoryDto.title,
+      })
+      .exec();
+
+    if (isExistCategoryWithSameTittle) {
+      throw new BadRequestException(
+        `Category with title ${createCategoryDto.title} already exist`,
+      );
+    }
+
     const newCategory = new this.categoryModel(createCategoryDto);
     return await newCategory.save();
   }
@@ -34,6 +52,7 @@ export class CategoryService {
       updateCategoryDto,
       { new: true },
     );
+
     if (!updatedCategory) {
       throw new NotFoundException('updated category not found');
     }
@@ -58,5 +77,40 @@ export class CategoryService {
       throw new NotFoundException('deleted category not found');
     }
     return deletedCategory;
+  }
+
+  async addSubCategory(
+    addSubCategoryDto: AddSubCategoryDto,
+  ): Promise<ICategory> {
+    const addedSubCategory =
+      await this.subcategoryService.getSubCategoryByTitle({
+        title: addSubCategoryDto.subcategoryTitle,
+      });
+
+    const category = await this.categoryModel
+      .findOne({
+        title: addSubCategoryDto.categoryTitle,
+      })
+      .exec();
+
+    if (!category) {
+      throw new BadRequestException('Category not found');
+    }
+
+    const updatedSubCategory =
+      await this.subcategoryService.updateSubCategoryByParentId(
+        addedSubCategory._id,
+        { parentId: category._id },
+      );
+
+    const updatedCategory = await this.categoryModel
+      .findOneAndUpdate(
+        { title: addSubCategoryDto.categoryTitle },
+        { $push: { subcategory: updatedSubCategory } },
+        { new: true },
+      )
+      .exec();
+
+    return await updatedCategory.save();
   }
 }
