@@ -10,6 +10,8 @@ import { CreateCategoryDto } from './dto';
 import { ICategory } from './dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { MoveSubCategoryDto } from './dto';
+import { RemoveSubCategoryDto } from './dto';
 import { SubCategoryService } from '../subcategory/subcategory.service';
 import { UpdateCategoryDto } from './dto';
 
@@ -68,7 +70,7 @@ export class CategoryService {
     return categoryById;
   }
 
-  async deleteCategory(categoryId: string) {
+  async deleteCategory(categoryId: string): Promise<ICategory> {
     const deletedCategory = await this.categoryModel
       .findByIdAndDelete(categoryId)
       .exec();
@@ -112,5 +114,60 @@ export class CategoryService {
       .exec();
 
     return await updatedCategory.save();
+  }
+
+  async removeSubCategory(
+    removeSubCategoryDto: RemoveSubCategoryDto,
+  ): Promise<ICategory> {
+    const removedSubCategory =
+      await this.subcategoryService.getSubCategoryByTitle({
+        title: removeSubCategoryDto.subcategoryTitle,
+      });
+
+    const category = await this.categoryModel
+      .findOne({
+        title: removeSubCategoryDto.categoryTitle,
+      })
+      .exec();
+
+    if (!category) {
+      throw new BadRequestException('Category not found');
+    }
+
+    await this.subcategoryService.updateSubCategoryByParentId(
+      removedSubCategory._id,
+      { parentId: null },
+    );
+
+    const updatedCategory = await this.categoryModel
+      .findOneAndUpdate(
+        { title: removeSubCategoryDto.categoryTitle },
+        {
+          $pull: {
+            subcategory: { title: removeSubCategoryDto.subcategoryTitle },
+          },
+        },
+        { new: true },
+      )
+      .exec();
+
+    return await updatedCategory.save();
+  }
+
+  async moveSubCategory(
+    moveSubCategoryDto: MoveSubCategoryDto,
+  ): Promise<ICategory> {
+    const remove_sub = {
+      categoryTitle: moveSubCategoryDto.categoryTitle,
+      subcategoryTitle: moveSubCategoryDto.subcategoryTitle,
+    };
+
+    const add_sub = {
+      categoryTitle: moveSubCategoryDto.targetCategoryTitle,
+      subcategoryTitle: moveSubCategoryDto.subcategoryTitle,
+    };
+
+    await this.removeSubCategory(remove_sub);
+    return await this.addSubCategory(add_sub);
   }
 }

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -74,6 +75,12 @@ export class SubCategoryService {
 
     if (!deletedSubCategory) {
       throw new NotFoundException('deleted subcategory not found');
+    }
+
+    if (deletedSubCategory.parentId) {
+      throw new ForbiddenException(
+        `Subcategory ${deletedSubCategory.title} is child element for category _id: ${deletedSubCategory.parentId}`,
+      );
     }
     return deletedSubCategory;
   }

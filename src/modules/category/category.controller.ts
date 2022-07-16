@@ -10,10 +10,14 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
+
 import { Category } from './schemas/category-schema';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto';
 import { ICategory } from './dto';
+import { MoveSubCategoryDto } from './dto/move-sub-catergory.dto';
+import { ParentIdGuard } from '../../guards/parent-id.guard';
+import { RemoveSubCategoryDto } from './dto/remove-sub-category.dto';
 import { UpdateCategoryDto } from './dto';
 import { UserRole } from '../../decorators';
 import { UserRoleEnum } from '../../constants';
@@ -25,12 +29,14 @@ export class CategoryController {
   constructor(private categoryService: CategoryService) {}
 
   @ApiOperation({ summary: 'Get all categories' })
+  @ApiResponse({ status: 200, type: [Category] })
   @Get('')
   async getProductCategories(): Promise<ICategory[]> {
     return await this.categoryService.getAllCategories();
   }
 
   @ApiOperation({ summary: 'Get category' })
+  @ApiResponse({ status: 200, type: Category })
   @Get('/:id')
   async getProductCategory(
     @Param('id') categoryId: string,
@@ -74,14 +80,37 @@ export class CategoryController {
   ): Promise<ICategory> {
     return await this.categoryService.deleteCategory(categoryId);
   }
+
   @ApiOperation({ summary: 'Create category' })
   @ApiResponse({ status: 201, type: Category })
   @Put('add/subcategory')
   @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.MANAGER)
-  @UseGuards(UserRoleGuard)
+  @UseGuards(UserRoleGuard, ParentIdGuard)
   async addProductSubCategory(
     @Body() addSubCategoryDto: AddSubCategoryDto,
   ): Promise<ICategory> {
     return await this.categoryService.addSubCategory(addSubCategoryDto);
+  }
+
+  @ApiOperation({ summary: 'Remove subcategory' })
+  @ApiResponse({ status: 201, type: Category })
+  @Put('remove/subcategory')
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.MANAGER)
+  @UseGuards(UserRoleGuard)
+  async removeProductSubCategory(
+    @Body() removeSubCategoryDto: RemoveSubCategoryDto,
+  ): Promise<ICategory> {
+    return await this.categoryService.removeSubCategory(removeSubCategoryDto);
+  }
+
+  @ApiOperation({ summary: 'Move subcategory' })
+  @ApiResponse({ status: 201, type: Category })
+  @Put('move/subcategory')
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.MANAGER)
+  @UseGuards(UserRoleGuard)
+  async moveProductSubCategory(
+    @Body() moveSubCategoryDto: MoveSubCategoryDto,
+  ): Promise<ICategory> {
+    return await this.categoryService.moveSubCategory(moveSubCategoryDto);
   }
 }
