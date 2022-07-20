@@ -12,9 +12,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get('port');
   const config = new DocumentBuilder()
-    .setTitle('Users')
-    .setDescription('Users CRUD and Authorization')
-    .setVersion('1.0')
+    .setTitle('NESTJS API')
+    .setDescription('Online store')
+    .setVersion('1.0.0')
     .addApiKey(
       {
         type: 'apiKey',

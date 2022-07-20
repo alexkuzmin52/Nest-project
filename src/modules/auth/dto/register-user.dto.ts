@@ -65,7 +65,7 @@ export class RegisterUserDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Number,
     minimum: 5,
     maximum: 115,
