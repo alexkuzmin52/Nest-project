@@ -4,6 +4,6 @@ export interface ISubCategory {
   title: string;
   parentId: number;
   url: string;
-  sub_subcategory: [];
+  // sub_subcategory?: [];
   logo?: string;
 }

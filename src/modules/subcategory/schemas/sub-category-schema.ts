@@ -36,14 +36,14 @@ export class SubCategory {
   @Prop()
   url: string;
 
-  @ApiProperty({
-    description: 'Array of children subcategories',
-    example: [],
-  })
-  @Prop({ type: Array, default: [] })
-  subcategory: [];
-
-  @ApiProperty({ description: 'Logo of category', example: 'fileName' })
+  // @ApiProperty({
+  //   description: 'Array of children subcategories',
+  //   example: [],
+  // })
+  // @Prop({ type: Array, default: [] })
+  // subcategory: [];
+  //
+  @ApiProperty({ description: 'Logo of subcategory', example: 'fileName' })
   @Prop({ default: null })
   logo: string;
 }

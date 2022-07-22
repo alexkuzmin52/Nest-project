@@ -14,11 +14,14 @@ import { MoveSubCategoryDto } from './dto';
 import { RemoveSubCategoryDto } from './dto';
 import { SubCategoryService } from '../subcategory/subcategory.service';
 import { UpdateCategoryDto } from './dto';
+import { LogService } from '../log/log.service';
+import { ActionEnum } from '../../constants';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private categoryModel: Model<CategoryType>,
+    private logService: LogService,
     private subcategoryService: SubCategoryService,
   ) {}
 
@@ -28,6 +31,7 @@ export class CategoryService {
 
   async createCategory(
     createCategoryDto: CreateCategoryDto,
+    authId: string,
   ): Promise<ICategory> {
     const isExistCategoryWithSameTittle = await this.categoryModel
       .findOne({
@@ -41,13 +45,21 @@ export class CategoryService {
       );
     }
 
-    const newCategory = new this.categoryModel(createCategoryDto);
+    const newCategory = await new this.categoryModel(createCategoryDto);
+
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_CATEGORY_CREATE,
+      data: newCategory._id,
+    });
+
     return await newCategory.save();
   }
 
   async updateCategory(
     categoryId: string,
     updateCategoryDto: UpdateCategoryDto,
+    authId: string,
   ): Promise<ICategory> {
     const updatedCategory = await this.categoryModel.findByIdAndUpdate(
       categoryId,
@@ -58,6 +70,13 @@ export class CategoryService {
     if (!updatedCategory) {
       throw new NotFoundException('updated category not found');
     }
+
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_CATEGORY_UPDATE,
+      data: updatedCategory._id,
+    });
+
     return updatedCategory;
   }
 
@@ -67,10 +86,11 @@ export class CategoryService {
     if (!categoryById) {
       throw new NotFoundException('category not found');
     }
+
     return categoryById;
   }
 
-  async deleteCategory(categoryId: string): Promise<ICategory> {
+  async deleteCategory(categoryId: string, authId: string): Promise<ICategory> {
     const deletedCategory = await this.categoryModel
       .findByIdAndDelete(categoryId)
       .exec();
@@ -78,11 +98,19 @@ export class CategoryService {
     if (!deletedCategory) {
       throw new NotFoundException('deleted category not found');
     }
+
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_CATEGORY_DELETE,
+      data: deletedCategory._id,
+    });
+
     return deletedCategory;
   }
 
   async addSubCategory(
     addSubCategoryDto: AddSubCategoryDto,
+    authId: string,
   ): Promise<ICategory> {
     const addedSubCategory =
       await this.subcategoryService.getSubCategoryByTitle({
@@ -113,11 +141,21 @@ export class CategoryService {
       )
       .exec();
 
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_CATEGORY_ADD_SUBCATEGORY,
+      data: {
+        category: updatedCategory._id,
+        subcategory: updatedSubCategory._id,
+      },
+    });
+
     return await updatedCategory.save();
   }
 
   async removeSubCategory(
     removeSubCategoryDto: RemoveSubCategoryDto,
+    authId: string,
   ): Promise<ICategory> {
     const removedSubCategory =
       await this.subcategoryService.getSubCategoryByTitle({
@@ -134,10 +172,11 @@ export class CategoryService {
       throw new BadRequestException('Category not found');
     }
 
-    await this.subcategoryService.updateSubCategoryByParentId(
-      removedSubCategory._id,
-      { parentId: null },
-    );
+    const updatedSubCategory =
+      await this.subcategoryService.updateSubCategoryByParentId(
+        removedSubCategory._id,
+        { parentId: null },
+      );
 
     const updatedCategory = await this.categoryModel
       .findOneAndUpdate(
@@ -151,11 +190,21 @@ export class CategoryService {
       )
       .exec();
 
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_CATEGORY_REMOVE_SUBCATEGORY,
+      data: {
+        category: updatedCategory._id,
+        subcategory: updatedSubCategory._id,
+      },
+    });
+
     return await updatedCategory.save();
   }
 
   async moveSubCategory(
     moveSubCategoryDto: MoveSubCategoryDto,
+    authId: string,
   ): Promise<ICategory> {
     const remove_sub = {
       categoryTitle: moveSubCategoryDto.categoryTitle,
@@ -167,7 +216,18 @@ export class CategoryService {
       subcategoryTitle: moveSubCategoryDto.subcategoryTitle,
     };
 
-    await this.removeSubCategory(remove_sub);
-    return await this.addSubCategory(add_sub);
+    await this.removeSubCategory(remove_sub, authId);
+
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_CATEGORY_MOVE_SUBCATEGORY,
+      data: {
+        subcategory: moveSubCategoryDto.subcategoryTitle,
+        fromCategory: moveSubCategoryDto.categoryTitle,
+        toCategory: moveSubCategoryDto.targetCategoryTitle,
+      },
+    });
+
+    return await this.addSubCategory(add_sub, authId);
   }
 }
