@@ -5,3 +5,4 @@ export * from './user-role-enum';
 export * from './user-status-enum';
 export * from './regex-enum';
 export * from './user-gender-enum';
+export * from './product-type-enum';

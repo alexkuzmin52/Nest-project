@@ -4,11 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 import { ActionEnum } from '../../constants';
-import { CreateProductDto } from './dto';
+import {
+  CreateProductDto,
+  ProductFilterDto,
+  ProductQueryFilterDto,
+  UpdateProductDto,
+} from './dto';
 import { IProduct } from './dto';
 import { LogService } from '../log/log.service';
 import { Product, ProductType } from './schemas/product-schema';
@@ -75,5 +80,80 @@ export class ProductService {
       data: { productId: updatedProduct._id, addPhotos: photosArr },
     });
     return updatedProduct;
+  }
+
+  async getProducts(): Promise<IProduct[]> {
+    return await this.productModel.find().exec();
+  }
+
+  async getProduct(productId: string): Promise<IProduct> {
+    const productById = await this.productModel.findById(productId).exec();
+    if (!productById) {
+      throw new NotFoundException('Product not found');
+    }
+    return productById;
+  }
+
+  async updateProductById(
+    updateProductDto: UpdateProductDto,
+    authId: string,
+    productId: string,
+  ): Promise<IProduct> {
+    const updatedProduct = await this.productModel
+      .findByIdAndUpdate(productId, updateProductDto, { new: true })
+      .exec();
+
+    if (!updatedProduct) {
+      throw new NotFoundException('Updated product not found');
+    }
+
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_PRODUCT_UPDATE,
+      data: updatedProduct._id,
+    });
+    return updatedProduct;
+  }
+
+  async removeProductById(productId: string, authId): Promise<IProduct> {
+    const deletedProduct = await this.productModel
+      .findByIdAndDelete(productId)
+      .exec();
+
+    if (!deletedProduct) {
+      throw new NotFoundException('Deleted product not found');
+    }
+
+    await this.logService.createLog({
+      userId: authId,
+      event: ActionEnum.USER_PRODUCT_DELETE,
+      data: deletedProduct._id,
+    });
+    return deletedProduct;
+  }
+
+  async getProductsByFilter(query: ProductQueryFilterDto): Promise<IProduct[]> {
+    const {
+      limit,
+      page,
+      sortingDirection,
+      sortingField,
+      stockCountMax,
+      stockCountMin,
+      storeCountMax,
+      storeCountMin,
+      ...rest
+    } = query;
+    const stockCount = { $gte: stockCountMin, $lte: stockCountMax };
+    const storeCount = { $gte: storeCountMin, $lte: storeCountMax };
+    const skip = limit * (page - 1);
+    const filter: ProductFilterDto = { ...rest, stockCount, storeCount };
+
+    return await this.productModel
+      .find(filter, { password: 0 })
+      .sort([[sortingField, sortingDirection]])
+      .skip(skip)
+      .limit(limit)
+      .exec();
   }
 }

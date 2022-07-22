@@ -1,3 +1,4 @@
+export * from './array-files.decorator';
 export * from './auth-id.decorator';
 export * from './single-file.decorator';
 export * from './user-role.decorator';

@@ -6,3 +6,6 @@ export * from './package-dimensions.dto';
 export * from './package-dimensions.interface';
 export * from './product.interface';
 export * from './review.interface';
+export * from './update-product.dto';
+export * from './product-filter.dto';
+export * from './product-query-filter.dto';
