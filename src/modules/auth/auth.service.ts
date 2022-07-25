@@ -87,27 +87,30 @@ export class AuthService {
   }
 
   async confirmUser(confirmToken: string): Promise<object> {
-    const payload = await this.jwtService.verify(confirmToken, {
-      secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
-    });
+    try {
+      const payload = await this.jwtService.verify(confirmToken, {
+        secret: this.configService.get('JWT_CONFIRM_EMAIL_SECRET'),
+      });
 
-    await this.userService.findUserByParam({
-      token: confirmToken,
-    });
+      await this.userService.findUserByParam({
+        token: confirmToken,
+      });
 
-    const confirmedUser = await this.userService.updateUserByParam(
-      payload['id'],
-      {
-        status: UserStatusEnum.CONFIRMED,
-        token: null,
-      },
-    );
+      const confirmedUser = await this.userService.updateUserByParam(
+        payload['id'],
+        {
+          status: UserStatusEnum.CONFIRMED,
+          token: null,
+        },
+      );
 
-    await this.logService.createLog({
-      event: ActionEnum.USER_CONFIRMED,
-      userId: confirmedUser._id,
-    });
-
+      await this.logService.createLog({
+        event: ActionEnum.USER_CONFIRMED,
+        userId: confirmedUser._id,
+      });
+    } catch (e) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
     return { message: 'Registration successfully confirmed. Please login' };
   }
 
@@ -115,12 +118,10 @@ export class AuthService {
     const userLogin = await this.userService.findUserLoginByEmail({
       email: loginDto.email,
     });
-
     const isValidPassword = await bcrypt.compare(
       loginDto.password,
       userLogin.password,
     );
-
     if (
       (userLogin.status !== UserStatusEnum.LOGGED_OUT &&
         userLogin.status !== UserStatusEnum.CONFIRMED) ||
@@ -156,7 +157,7 @@ export class AuthService {
       .findOne({ userID: userID })
       .exec();
     if (!authByUserId) {
-      throw new ForbiddenException('missing valid token');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     const isExistValidToken =
@@ -164,7 +165,7 @@ export class AuthService {
       authByUserId.refresh_token === token;
 
     if (!isExistValidToken) {
-      throw new ForbiddenException('missing valid token');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     return authByUserId;
@@ -175,6 +176,8 @@ export class AuthService {
       status: UserStatusEnum.LOGGED_OUT,
     });
 
+    await this.authModel.deleteOne({ userID: authId });
+
     await this.logService.createLog({
       event: ActionEnum.USER_LOGOUT,
       userId: authId,
@@ -184,60 +187,73 @@ export class AuthService {
   }
 
   async forgotPassword(token: string): Promise<object> {
-    const payload = await this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
-    });
+    try {
+      const payload = await this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
+      });
 
-    const userForgot = await this.userService.getUserById(payload.id);
+      const userForgot = await this.userService.getUserById(payload.id);
 
-    const forgotToken = this.jwtService.sign(
-      {
-        email: userForgot.email,
-        id: userForgot._id,
-        role: userForgot.role,
-      },
-      {
-        secret: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_SECRET'),
-        expiresIn: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_LIFETIME'),
-      },
-    );
+      const forgotToken = this.jwtService.sign(
+        {
+          email: userForgot.email,
+          id: userForgot._id,
+          role: userForgot.role,
+        },
+        {
+          secret: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_SECRET'),
+          expiresIn: this.configService.get(
+            'JWT_FORGOT_PASSWORD_EMAIL_LIFETIME',
+          ),
+        },
+      );
 
-    await this.logService.createLog({
-      event: ActionEnum.USER_FORGOT_PASSWORD,
-      userId: userForgot._id,
-    });
+      await this.logService.createLog({
+        event: ActionEnum.USER_FORGOT_PASSWORD,
+        userId: userForgot._id,
+      });
 
-    await this.mailService.sendUserForgot(userForgot, forgotToken);
+      await this.mailService.sendUserForgot(userForgot, forgotToken);
 
-    return {
-      link: `${forgotToken}`,
-    };
+      return {
+        message: `Link for reset password  sent to your email`,
+        link: forgotToken,
+      };
+    } catch (e) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
   }
 
   async resetPassword(token: string): Promise<object> {
-    const payload = this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_SECRET'),
-    });
-    const changingPasswordUser = await this.userService.getUserById(payload.id);
-    const newPassword = generateRandomPassword(6);
-    const newHashedPassword = await bcrypt.hash(newPassword, 10);
-    const updatedUser = await this.userService.updateUserByParam(
-      changingPasswordUser._id,
-      { token: null, password: newHashedPassword },
-    );
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_FORGOT_PASSWORD_EMAIL_SECRET'),
+      });
+      const changingPasswordUser = await this.userService.getUserById(
+        payload.id,
+      );
+      const newPassword = generateRandomPassword(6);
+      const newHashedPassword = await bcrypt.hash(newPassword, 10);
+      const updatedUser = await this.userService.updateUserByParam(
+        changingPasswordUser._id,
+        { token: null, password: newHashedPassword },
+      );
 
-    await this.authModel.deleteOne({ userID: updatedUser._id });
+      await this.authModel.deleteOne({ userID: updatedUser._id });
 
-    await this.mailService.sendTemporaryPassword(updatedUser, newPassword);
+      await this.mailService.sendTemporaryPassword(updatedUser, newPassword);
 
-    await this.logService.createLog({
-      event: ActionEnum.USER_RESET_PASSWORD,
-      userId: updatedUser._id,
-    });
+      await this.logService.createLog({
+        event: ActionEnum.USER_RESET_PASSWORD,
+        userId: updatedUser._id,
+      });
 
-    return {
-      message: `Information with a new passport has been sent to your mail ${newPassword}`,
-    };
+      return {
+        message: `Information with a new passport has been sent to your mail ${newPassword}`, //TODO remove ${newPassword}
+      };
+    } catch (e) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
   }
 
   async checkIsValidUser(id: string): Promise<IUser> {
@@ -308,7 +324,6 @@ export class AuthService {
     userPasswordDto: ChangeUserPasswordDto,
   ): Promise<object> {
     const hashedPassword = await bcrypt.hash(userPasswordDto.password, 10);
-
     const updatedUser = await this.userService.updateUserByParam(userId, {
       status: UserStatusEnum.LOGGED_OUT,
       password: hashedPassword,

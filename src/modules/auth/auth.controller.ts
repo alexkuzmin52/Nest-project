@@ -1,4 +1,14 @@
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   Body,
@@ -11,19 +21,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
-import { AuthId } from '../../decorators';
-import { RegisterUserDto } from './dto';
+import { AuthId, UserRole } from '../../decorators';
 import {
   ChangeUserPasswordDto,
   ChangeUserRoleDto,
   ChangeUserStatusDto,
   IAuth,
+  LoginDto,
+  RegisterUserDto,
 } from './dto';
-import { LoginDto } from './dto';
-import { RefreshTokenGuard } from '../../guards';
-import { UserRole } from '../../decorators';
+import { RefreshTokenGuard, UserRoleGuard } from '../../guards';
 import { UserRoleEnum } from '../../constants';
-import { UserRoleGuard } from '../../guards';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -31,22 +39,29 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @ApiOperation({ summary: 'Create and register user' })
-  @ApiResponse({ status: 201, type: String })
+  @ApiCreatedResponse({
+    type: Object,
+    description: 'User registered successfully',
+  })
+  @ApiBadRequestResponse()
   @Post('register')
   async register(@Body() registerUserDto: RegisterUserDto): Promise<object> {
     return await this.authService.registerUser(registerUserDto);
   }
 
   @ApiOperation({ summary: 'User registration confirmation' })
-  @ApiResponse({ status: 200, type: String })
+  @ApiOkResponse({ type: Object })
+  @ApiUnauthorizedResponse()
   @Get('confirm/:confirmToken')
   async confirm(@Param('confirmToken') confirmToken: string): Promise<object> {
     return await this.authService.confirmUser(confirmToken);
   }
 
   @ApiOperation({ summary: 'User refresh token' })
-  @ApiResponse({ status: 200, type: Object })
-  @UserRole(UserRoleEnum.USER, UserRoleEnum.ADMIN)
+  @ApiOkResponse({ type: Object, description: 'tokens' })
+  @ApiNotFoundResponse()
+  @ApiSecurity('access-key')
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.MANAGER)
   @UseGuards(RefreshTokenGuard)
   @Get('refresh')
   async refresh(@AuthId() authid: string): Promise<object> {
@@ -54,42 +69,44 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'User login' })
-  @ApiResponse({ status: 200, type: String })
+  @ApiOkResponse({ type: Object, description: 'tokens' })
+  @ApiUnauthorizedResponse()
   @Post('login')
   async login(@Body() loginDto: LoginDto): Promise<Partial<IAuth>> {
     return await this.authService.loginUser(loginDto);
   }
 
   @ApiOperation({ summary: 'User logout' })
-  @ApiResponse({ status: 200 })
-  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @ApiOkResponse({ type: Object, description: 'user logout' })
+  @ApiUnauthorizedResponse()
+  @ApiSecurity('access-key')
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.MANAGER)
   @UseGuards(UserRoleGuard)
   @Get('logout')
-  async logout(@AuthId() authId: string): Promise<any> {
+  async logout(@AuthId() authId: string): Promise<object> {
     return await this.authService.logoutUser(authId);
   }
 
   @ApiOperation({ summary: 'User forgot password' })
-  @ApiResponse({ status: 200 })
-  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
-  @UseGuards(UserRoleGuard)
+  @ApiOkResponse({ type: Object })
+  @ApiUnauthorizedResponse()
+  @ApiSecurity('access-key')
   @Get('forgot')
   async forgot(@Req() req): Promise<object> {
     return await this.authService.forgotPassword(req.headers.authorization);
   }
 
   @ApiOperation({ summary: 'User reset password' })
-  @ApiResponse({ status: 200 })
-  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
-  // @UseGuards(UserRoleGuard)
+  @ApiOkResponse({ type: Object })
   @Get('reset/:token')
   async reset(@Param('token') token: string): Promise<object> {
     return await this.authService.resetPassword(token);
   }
 
   @ApiOperation({ summary: 'User change password' })
-  @ApiResponse({ status: 200, type: Object })
-  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER)
+  @ApiOkResponse({ type: Object })
+  @ApiSecurity('access-key')
+  @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.USER, UserRoleEnum.MANAGER)
   @UseGuards(UserRoleGuard)
   @Put('pass')
   async changePassword(
@@ -100,7 +117,9 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'User change status' })
-  @ApiResponse({ status: 200, type: Object })
+  @ApiOkResponse({ type: Object })
+  @ApiNotFoundResponse()
+  @ApiSecurity('access-key')
   @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Put('status/:id')
@@ -113,7 +132,9 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'User change role' })
-  @ApiResponse({ status: 200, type: Object })
+  @ApiResponse({ type: Object })
+  @ApiNotFoundResponse()
+  @ApiSecurity('access-key')
   @UserRole(UserRoleEnum.ADMIN)
   @UseGuards(UserRoleGuard)
   @Put('role/:id')

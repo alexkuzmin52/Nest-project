@@ -47,7 +47,6 @@ export class SubCategoryController {
   @ApiResponse({ status: 200, type: Category })
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
-  @ApiSecurity('access-key')
   @Get('/:id')
   async getProductSubCategory(
     @Param('id', ValidatorMongoIdPipe) subcategoryId: string,
