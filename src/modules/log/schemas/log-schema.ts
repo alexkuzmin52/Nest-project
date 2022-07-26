@@ -1,15 +1,23 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
-import { User } from '../../user/schemas/user-schema';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+
+import { ActionEnum } from '../../../constants';
 import { ILog } from '../dto';
+import { User } from '../../user/schemas/user-schema';
 
 export type LogType = ILog & mongoose.Document;
 @Schema({ timestamps: true })
 export class Log {
-  @Prop({ required: true })
+  @ApiPropertyOptional({ enum: ActionEnum })
+  @Prop({ required: true, enum: ActionEnum })
   event: string;
+
+  @ApiPropertyOptional({ type: mongoose.Schema.Types.ObjectId })
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
-  userId: User;
+  userId: string;
+
+  @ApiPropertyOptional()
   @Prop({ type: mongoose.Schema.Types.Mixed, default: null })
   data: any;
 }

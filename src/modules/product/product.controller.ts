@@ -109,7 +109,7 @@ export class ProductController {
   }
 
   @ApiOperation({ summary: 'Get all products' })
-  @ApiOkResponse({ type: Product })
+  @ApiOkResponse({ type: [Product] })
   @ApiSecurity('access-key')
   @ApiBody({ type: [Product] })
   @UserRole(UserRoleEnum.MANAGER, UserRoleEnum.USER)
@@ -129,7 +129,6 @@ export class ProductController {
   @Get('/:id')
   async getProductById(
     @Param('id', ValidatorMongoIdPipe) productId: string,
-    @AuthId() authId: string,
   ): Promise<IProduct> {
     return await this.productService.getProduct(productId);
   }
@@ -139,7 +138,6 @@ export class ProductController {
   @ApiForbiddenResponse()
   @ApiNotFoundResponse()
   @ApiBadRequestResponse()
-  // @ApiBody({ type: Product })
   @ApiSecurity('access-key')
   @Delete(':id')
   async deleteProduct(

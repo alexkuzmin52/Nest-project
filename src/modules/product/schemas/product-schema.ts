@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { IProduct } from '../dto';
-import { ProductTypeEnum } from '../../../constants/product-type-enum';
+import { ProductTypeEnum } from '../../../constants';
 
 export type ProductType = IProduct & Document;
 
