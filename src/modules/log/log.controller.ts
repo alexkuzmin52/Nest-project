@@ -1,6 +1,6 @@
 import {
   ApiOkResponse,
-  ApiProperty,
+  ApiOperation,
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
@@ -21,7 +21,7 @@ import { UserRoleGuard } from '../../guards';
 export class LogController {
   constructor(private logService: LogService) {}
 
-  @ApiProperty({ description: 'Get all logs', type: Array })
+  @ApiOperation({ summary: 'Get all logs' })
   @ApiOkResponse({ type: [Log] })
   @ApiSecurity('access-key')
   @Get('')
@@ -29,7 +29,7 @@ export class LogController {
     return await this.logService.getLogs();
   }
 
-  @ApiProperty({ description: 'Get logs by filter', type: Array })
+  @ApiOperation({ summary: 'Get logs by filter' })
   @ApiOkResponse({ type: [Log] })
   @ApiSecurity('access-key')
   @Get('filter')

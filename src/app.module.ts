@@ -3,14 +3,15 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from './modules/auth/auth.module';
+import { CartModule } from './modules/cart/cart.module';
+import { CategoryModule } from './modules/category/category.module';
 import { FileModule } from './modules/file/file.module';
 import { LogModule } from './modules/log/log.module';
 import { MailModule } from '../mail/mail.module';
+import { ProductModule } from './modules/product/product.module';
+import { SubCategoryModule } from './modules/subcategory/sub-category.module';
 import { UserModule } from './modules/user/user.module';
 import { configuration } from '../config/configuration';
-import { CategoryModule } from './modules/category/category.module';
-import { SubCategoryModule } from './modules/subcategory/sub-category.module';
-import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ProductModule } from './modules/product/product.module';
       envFilePath: `config/env/.${process.env.NODE_ENV}.env`,
       load: [configuration],
     }),
+    CartModule,
     CategoryModule,
     SubCategoryModule,
     FileModule,
