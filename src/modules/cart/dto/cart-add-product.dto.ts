@@ -3,7 +3,7 @@ import { IsArray, IsNumber, IsOptional } from 'class-validator';
 
 import { CartProductDto } from './cart-product.dto';
 import { CartStatusEnum } from '../../../constants';
-
+// TODO remove
 export class AddProductToCartDto {
   @ApiProperty({ description: 'Products set', type: [CartProductDto] })
   @IsOptional()

@@ -15,6 +15,10 @@ import {
 } from './dto';
 import { CartStatusEnum } from '../../constants';
 import { ProductService } from '../product/product.service';
+import { recalculateCartHelper } from './helpers/recalculate-cart-helper';
+import { CartQueryFilterDto } from './dto/cart-query-filter.dto';
+import { ProductFilterDto } from '../product/dto';
+import { CartFilterDto } from './dto/cart-filter.dto';
 
 @Injectable()
 export class CartService {
@@ -80,25 +84,31 @@ export class CartService {
     const product = await this.productService.getProduct(
       changeCountProductDto.productId,
     );
-    const index = userCart.products.findIndex(
-      (value: ICartProduct) =>
-        value.productId.toString() === changeCountProductDto.productId,
-    );
-    if (index === -1) {
-      throw new NotFoundException('Product not found');
-    }
 
-    userCart.products[index].price = product.price;
-    userCart.products[index].count = changeCountProductDto.count;
-    userCart.products[index].cost = product.price * changeCountProductDto.count;
-
-    userCart.amount = userCart.products.length;
-    userCart.totalCost = userCart.products.reduce<number>(
-      (prev: number, cur: Partial<ICartProduct>) => prev + cur.cost,
-      0,
+    const recalculateCart = recalculateCartHelper(
+      userCart,
+      product,
+      changeCountProductDto.count,
     );
+
+    return this.cartModel.findByIdAndUpdate(userCart._id, recalculateCart, {
+      new: true,
+    });
+  }
+
+  async getAllCartsByFilter(
+    authId: string,
+    query: CartQueryFilterDto,
+  ): Promise<ICart[]> {
+    const { limit, page, sortingDirection, sortingField, ...rest } = query;
+    const skip = limit * (page - 1);
+    const filter: CartFilterDto = { ...rest };
+
     return await this.cartModel
-      .findByIdAndUpdate(userCart._id, userCart, { new: true })
+      .find(filter)
+      .sort([[sortingField, sortingDirection]])
+      .skip(skip)
+      .limit(limit)
       .exec();
   }
 }

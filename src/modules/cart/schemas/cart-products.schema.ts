@@ -4,11 +4,13 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { ICartProduct } from '../dto';
 import { User } from '../../user/schemas/user-schema';
+import { ApiProperty } from '@nestjs/swagger';
 
 export type CartProductsType = ICartProduct & Document;
 
 @Schema({ _id: false })
 export class CartProducts {
+  @ApiProperty({ type: String })
   @Prop({
     required: true,
     type: mongoose.Schema.Types.ObjectId,
@@ -17,12 +19,15 @@ export class CartProducts {
   })
   productId: string | Types.ObjectId;
 
+  @ApiProperty({ default: 0 })
   @Prop({ required: true, type: Number, default: 0 })
   price: number;
 
-  @Prop({ required: true, type: Number, default: 0 })
+  @ApiProperty({ default: 1 })
+  @Prop({ required: true, type: Number, default: 1 })
   count: number;
 
+  @ApiProperty({ default: 0 })
   @Prop({ required: true, type: Number, default: 0 })
   cost: number;
 }

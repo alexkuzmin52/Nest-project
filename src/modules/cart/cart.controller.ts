@@ -6,21 +6,30 @@ import {
   ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
-import { CartService } from './cart.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
+import { CartService } from './cart.service';
 import { AuthId, UserRole } from '../../decorators';
 import { Cart } from './schemas';
 import { CartProductDto } from './dto';
+import { CartQueryFilterDto } from './dto/cart-query-filter.dto';
 import { ChangeCountProductDto } from './dto';
 import { ICart } from './dto';
 import { UserRoleEnum } from '../../constants';
 import { UserRoleGuard } from '../../guards';
 
 @ApiTags('Cart')
-@ApiSecurity('access-key')
-@UserRole(UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER)
-@UseGuards(UserRoleGuard)
+// @ApiSecurity('access-key')
+// @UserRole(UserRoleEnum.ADMIN, UserRoleEnum.MANAGER, UserRoleEnum.USER)
+// @UseGuards(UserRoleGuard)
 @Controller('cart')
 export class CartController {
   constructor(private cartService: CartService) {}
@@ -52,6 +61,21 @@ export class CartController {
     return await this.cartService.changeCountOfProductCart(
       authId,
       changeCountProductDto,
+    );
+  }
+
+  @ApiSecurity('access-key')
+  @ApiOkResponse({ type: [Cart] })
+  @UserRole(UserRoleEnum.ADMIN)
+  @UseGuards(UserRoleGuard)
+  @Get('filter')
+  async getCartsByFilter(
+    @AuthId() authId: string,
+    @Query() cartQueryFilterDto: CartQueryFilterDto,
+  ): Promise<ICart[]> {
+    return await this.cartService.getAllCartsByFilter(
+      authId,
+      cartQueryFilterDto,
     );
   }
 }

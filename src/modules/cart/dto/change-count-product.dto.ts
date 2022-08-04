@@ -7,7 +7,7 @@ export class ChangeCountProductDto {
   @IsMongoId()
   productId: string;
 
-  @ApiProperty({ required: true, description: 'ProductId' })
+  @ApiProperty({ required: true, description: 'Count of products' })
   @IsNotEmpty()
   @IsInt()
   count: number;
