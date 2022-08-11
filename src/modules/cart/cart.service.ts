@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -156,5 +160,33 @@ export class CartService {
     });
 
     return cartsForUpdate;
+  }
+
+  async deleteUserCartById(cartId: string): Promise<ICart> {
+    const deletedCart = await this.cartModel.findByIdAndDelete(cartId).exec();
+    if (!deletedCart) {
+      throw new NotFoundException('Cart not found');
+    }
+    return deletedCart;
+  }
+
+  async removeCartProductById(
+    userId: string,
+    productId: string,
+  ): Promise<ICart> {
+    const updatedCart = await this.cartModel.findOneAndUpdate(
+      { userId: userId },
+      { $pull: { products: { productId: productId } } },
+      { new: true },
+    );
+
+    updatedCart.amount = updatedCart.products.length;
+    updatedCart.totalCost = updatedCart.products.reduce<number>(
+      (prev: number, cur: Partial<ICartProduct>) => prev + cur.cost,
+      0,
+    );
+
+    await updatedCart.save();
+    return updatedCart;
   }
 }
