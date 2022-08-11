@@ -38,6 +38,7 @@ import { Product } from './schemas/product-schema';
 import { UserRoleEnum } from '../../constants';
 import { UserRoleGuard } from '../../guards';
 import { ValidatorMongoIdPipe } from '../../pipes/validator-mongo-id.pipe';
+import { ProductDiscountDto } from './dto/product-discount.dto';
 
 @ApiTags('Product')
 @UserRole(UserRoleEnum.ADMIN)
@@ -159,5 +160,28 @@ export class ProductController {
     @Query() productQueryFilterDto: ProductQueryFilterDto,
   ): Promise<IProduct[]> {
     return await this.productService.getProductsByFilter(productQueryFilterDto);
+  }
+
+  @ApiOperation({ summary: 'Set discount' })
+  @ApiOkResponse({
+    type: Product,
+  })
+  @ApiNotFoundResponse()
+  @ApiForbiddenResponse()
+  @ApiBadRequestResponse()
+  @ApiSecurity('access-key')
+  @ApiBody({ type: ProductDiscountDto })
+  @UserRole(UserRoleEnum.MANAGER)
+  @Put('update/price/:id')
+  async setDiscountProduct(
+    @Param('id') productId: string,
+    @AuthId() authId: string,
+    @Body() productDiscountDto: ProductDiscountDto,
+  ): Promise<IProduct> {
+    return await this.productService.updateProductByDiscount(
+      productDiscountDto,
+      productId,
+      authId,
+    );
   }
 }

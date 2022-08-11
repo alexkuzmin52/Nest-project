@@ -15,7 +15,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ItemDimensionsDto } from './item-dimensions.dto';
 import { PackageDimensionsDto } from './package-dimensions.dto';
-import { ProductTypeEnum } from '../../../constants/product-type-enum';
+import { ProductTypeEnum } from '../../../constants';
 
 export class UpdateProductDto {
   @ApiPropertyOptional({

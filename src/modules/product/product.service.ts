@@ -10,18 +10,22 @@ import { Model } from 'mongoose';
 import { ActionEnum } from '../../constants';
 import {
   CreateProductDto,
+  IProduct,
   ProductFilterDto,
   ProductQueryFilterDto,
   UpdateProductDto,
 } from './dto';
-import { IProduct } from './dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEnum } from '../../constants/event-enum';
 import { LogService } from '../log/log.service';
 import { Product, ProductType } from './schemas/product-schema';
+import { ProductDiscountEvent } from './events/product-discount.event';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductType>,
+    private eventEmitter: EventEmitter2,
     private logService: LogService,
   ) {}
 
@@ -154,6 +158,47 @@ export class ProductService {
       .sort([[sortingField, sortingDirection]])
       .skip(skip)
       .limit(limit)
+      .exec();
+  }
+
+  async updateProductByDiscount(
+    productDiscountDto: Partial<IProduct>,
+    productId: string,
+    authId: string,
+  ): Promise<IProduct> {
+    const product = await this.getProduct(productId);
+    const prop = {
+      price: product.originalPrice * (1 - productDiscountDto.discount / 100),
+      discountFlag: true,
+      discount: productDiscountDto.discount,
+    };
+
+    const updatedProduct = await this.updateProductByParams(productId, prop);
+
+    const productDiscountEvent = new ProductDiscountEvent();
+    // productDiscountEvent.name = EventEnum.EVENT_PRODUCT_DISCOUNT;
+    productDiscountEvent.payload = updatedProduct;
+    // this.eventEmitter.emit('product.discounted', productDiscountEvent);
+    this.eventEmitter.emit(
+      EventEnum.EVENT_PRODUCT_DISCOUNT,
+      productDiscountEvent,
+    );
+
+    await this.logService.createLog({
+      event: ActionEnum.USER_PRODUCT_UPDATE,
+      data: { productId: productId },
+      userId: authId,
+    });
+
+    return updatedProduct;
+  }
+
+  async updateProductByParams(
+    productId: string,
+    params: Partial<IProduct>,
+  ): Promise<IProduct> {
+    return await this.productModel
+      .findByIdAndUpdate(productId, params, { new: true })
       .exec();
   }
 }

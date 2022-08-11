@@ -5,6 +5,7 @@
 config/env/.dev.env
 config/env/.prod.env
 # Logs
+
 logs
 *.log
 npm-debug.log*

@@ -2,9 +2,9 @@ import * as mongoose from 'mongoose';
 import { Document, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { ICartProduct } from '../dto';
-import { User } from '../../user/schemas/user-schema';
 import { ApiProperty } from '@nestjs/swagger';
+import { ICartProduct } from '../dto';
+import { Product } from '../../product/schemas/product-schema';
 
 export type CartProductsType = ICartProduct & Document;
 
@@ -14,10 +14,10 @@ export class CartProducts {
   @Prop({
     required: true,
     type: mongoose.Schema.Types.ObjectId,
-    ref: User.name,
+    ref: Product.name,
     default: null,
   })
-  productId: string | Types.ObjectId;
+  productId: string | Types.ObjectId | Product;
 
   @ApiProperty({ default: 0 })
   @Prop({ required: true, type: Number, default: 0 })

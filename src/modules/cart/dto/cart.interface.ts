@@ -1,16 +1,10 @@
 import { CartStatusEnum } from '../../../constants';
+import { ICartProduct } from './cart-poduct.interface';
 
 export interface ICart {
   _id: string;
   userId: string;
-  products: [
-    {
-      productId: string;
-      price: number;
-      count: number;
-      cost: number;
-    },
-  ];
+  products: ICartProduct[];
   amount: number;
   totalCost: number;
   status: CartStatusEnum;

@@ -1,11 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
+import { ActionEnum, CartStatusEnum } from '../../constants';
+import { CartFilterDto } from './dto';
+import { CartQueryFilterDto } from './dto';
 import { Cart, CartType } from './schemas';
 import {
   CartProductDto,
@@ -13,19 +12,19 @@ import {
   ICart,
   ICartProduct,
 } from './dto';
-import { CartStatusEnum } from '../../constants';
+import { LogService } from '../log/log.service';
+import { ProductDiscountEvent } from '../product/events/product-discount.event';
 import { ProductService } from '../product/product.service';
 import { recalculateCartHelper } from './helpers/recalculate-cart-helper';
-import { CartQueryFilterDto } from './dto/cart-query-filter.dto';
-import { ProductFilterDto } from '../product/dto';
-import { CartFilterDto } from './dto/cart-filter.dto';
 
 @Injectable()
 export class CartService {
   constructor(
     @InjectModel(Cart.name) private cartModel: Model<CartType>,
     private productService: ProductService,
+    private logService: LogService,
   ) {}
+
   async addProductToCartDto(
     cartProductDto: CartProductDto,
     authId: string,
@@ -60,6 +59,11 @@ export class CartService {
       .findByIdAndUpdate(userCart._id, userCart, { new: true })
       .exec();
 
+    await this.logService.createLog({
+      event: ActionEnum.USER_CART_UPDATE,
+      data: { cart: updatedCart._id },
+      userId: authId,
+    });
     return updatedCart;
   }
 
@@ -91,15 +95,20 @@ export class CartService {
       changeCountProductDto.count,
     );
 
-    return this.cartModel.findByIdAndUpdate(userCart._id, recalculateCart, {
-      new: true,
+    await this.logService.createLog({
+      event: ActionEnum.USER_CART_UPDATE,
+      data: { cart: userCart._id },
+      userId: authId,
     });
+
+    return this.cartModel
+      .findByIdAndUpdate(userCart._id, recalculateCart, {
+        new: true,
+      })
+      .exec();
   }
 
-  async getAllCartsByFilter(
-    authId: string,
-    query: CartQueryFilterDto,
-  ): Promise<ICart[]> {
+  async getAllCartsByFilter(query: CartQueryFilterDto): Promise<ICart[]> {
     const { limit, page, sortingDirection, sortingField, ...rest } = query;
     const skip = limit * (page - 1);
     const filter: CartFilterDto = { ...rest };
@@ -110,5 +119,42 @@ export class CartService {
       .skip(skip)
       .limit(limit)
       .exec();
+  }
+
+  async updateCartsByEvent(
+    productDiscountEvent: ProductDiscountEvent,
+  ): Promise<ICart[]> {
+    const product = productDiscountEvent.payload;
+    const carts = await this.cartModel.find().exec();
+    const cartsForUpdate = [];
+
+    for (const cart of carts) {
+      const index = cart.products.findIndex((value: ICartProduct) => {
+        return value.productId.toString() === product._id.toString();
+      });
+      if (index !== -1) {
+        cart.products[index].price = product.price;
+        cart.products[index].cost = product.price * cart.products[index].count;
+        cart.totalCost = cart.products.reduce<number>(
+          (prev: number, cur: Partial<ICartProduct>) => prev + cur.cost,
+          0,
+        );
+        const updatedCart = await this.cartModel
+          .findByIdAndUpdate(
+            cart._id,
+            { totalCost: cart.totalCost, products: cart.products },
+            { new: true },
+          )
+          .exec();
+        cartsForUpdate.push(updatedCart);
+      }
+    }
+    await this.logService.createLog({
+      event: ActionEnum.USER_CARTS_SET_DISCOUNT,
+      data: { product: product._id, discount: product.discount },
+      userId: product.userID,
+    });
+
+    return cartsForUpdate;
   }
 }

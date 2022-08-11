@@ -12,24 +12,26 @@ import { ProductModule } from './modules/product/product.module';
 import { SubCategoryModule } from './modules/subcategory/sub-category.module';
 import { UserModule } from './modules/user/user.module';
 import { configuration } from '../config/configuration';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
     AuthModule,
+    CartModule,
+    CategoryModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `config/env/.${process.env.NODE_ENV}.env`,
       load: [configuration],
     }),
-    CartModule,
-    CategoryModule,
-    SubCategoryModule,
+    EventEmitterModule.forRoot(),
     FileModule,
     LogModule,
     MailModule,
     MongooseModule.forRoot('mongodb://localhost:27017/nest-api'),
-    UserModule,
     ProductModule,
+    SubCategoryModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],

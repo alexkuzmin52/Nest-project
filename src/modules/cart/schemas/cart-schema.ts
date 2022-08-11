@@ -1,14 +1,14 @@
 import * as mongoose from 'mongoose';
-import { Document, Types } from 'mongoose';
+import { ApiProperty } from '@nestjs/swagger';
+import { Document } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { CartProducts, cartProductsSchema } from './cart-products.schema';
 import { CartStatusEnum } from '../../../constants';
 import { ICart } from '../dto';
-import { User, UserType } from '../../user/schemas/user-schema';
-import { ApiProperty } from '@nestjs/swagger';
+import { User } from '../../user/schemas/user-schema';
 
-export type CartType = ICart & Document;
+export type CartType = ICart & Document & Cart;
 
 @Schema({ timestamps: true })
 export class Cart {
@@ -18,7 +18,7 @@ export class Cart {
     type: mongoose.Schema.Types.ObjectId,
     ref: User.name,
   })
-  userId: string | Types.ObjectId | UserType;
+  userId: User;
 
   @ApiProperty({ type: [cartProductsSchema], default: [] })
   @Prop({ required: true, type: [cartProductsSchema], default: [] })
